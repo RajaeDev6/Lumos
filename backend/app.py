@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from config.settings import settings
 from routes.home import home
 from routes.users import users 
+from utils.app_logger import logger
 
 app = Flask(__name__)
 
