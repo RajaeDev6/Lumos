@@ -24,11 +24,11 @@ Use commit messages like these
 ## Workflow
 Pull from dev branch
 
-create your own branch (use rules above)
-commit with proper format
-alwasy pull before you push
-make sure open Pull Request (PR) in dev branch not main
-review then merge
+1. create your own branch (use rules above)
+2. commit with proper format
+3. alwasy pull before you push
+4. make sure open Pull Request (PR) in dev branch not main
+5. review then merge
 
 ## Notes
 - Keep PRs small and focused
