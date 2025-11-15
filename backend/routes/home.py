@@ -9,9 +9,7 @@ home = Blueprint("home", __name__)
 def index():
     """Write and read from database, return JSON with status code"""
     try:
-        teacher_id = "test_teacher_001"
-        
-        # Write to database
+        # Write to database with auto-generated ID
         logger.info("Writing teacher data to database...")
         teacher = Teacher(
             name="John Doe",
@@ -23,13 +21,15 @@ def index():
             weak_areas_count=2
         )
         
-        write_success = TeacherService.save_teacher(teacher_id, teacher)
+        teacher_id = TeacherService.save_teacher(teacher)
         
-        if not write_success:
+        if not teacher_id:
             return jsonify({
                 "status": "error",
                 "message": "Failed to write data to database. Please check Firebase connection."
             }), 500
+        
+        logger.info(f"Teacher created with auto-generated ID:")
         
         # Read from database
         logger.info("Reading teacher data from database...")
@@ -39,6 +39,7 @@ def index():
             return jsonify({
                 "status": "success",
                 "message": "✓ Data successfully written to and retrieved from database!",
+                "teacher_id": teacher_id,
                 "data": teacher_data
             }), 200
         else:

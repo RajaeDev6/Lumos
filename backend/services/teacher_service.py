@@ -13,15 +13,15 @@ class TeacherService:
             return None
 
     @staticmethod
-    def save_teacher(teacher_id: str, teacher_obj):
+    def save_teacher(teacher_obj):
+        """Save a teacher with auto-generated ID and return the ID"""
         try:
-            db.collection("teachers").document(teacher_id).set(
-                teacher_obj.to_dict(), merge=True
-            )
-            return True
+            doc_ref = db.collection("teachers").document()
+            doc_ref.set(teacher_obj.to_dict())
+            return doc_ref.id
         except Exception as e:
             logger.error(f"Error saving teacher: {e}")
-            return False
+            return None
 
     @staticmethod
     def update_field(teacher_id: str, field: str, value):
