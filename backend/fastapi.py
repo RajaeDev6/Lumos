@@ -2,6 +2,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login import LoginManager 
 from fastapi_login.exceptions import InvalidCredentialsException
+import json
 
 
 app = FastAPI()
@@ -60,7 +61,7 @@ def logout(request: Request, user=Depends(manager)):
 
 @app.post("/uploader/")
 async def uploader(file: UploadFile):
-    return Response(content=str("File Uploaded), media_type="text")
+    return Response(content=str("File Uploaded"), media_type="text")
 
 
 if __name__ == "__main__":
