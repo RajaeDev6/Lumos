@@ -18,8 +18,10 @@ class TeacherService:
             db.collection("teachers").document(teacher_id).set(
                 teacher_obj.to_dict(), merge=True
             )
+            return True
         except Exception as e:
             logger.error(f"Error saving teacher: {e}")
+            return False
 
     @staticmethod
     def update_field(teacher_id: str, field: str, value):
