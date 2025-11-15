@@ -2,9 +2,11 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from config.settings import settings
 
-firebase_creds = settings.FIREBASE_CREDENTIALS
+# Get Firebase credentials from settings (environment variables)
+firebase_creds_dict = settings.firebase_credentials_dict
 
-cred = credentials.Certificate(firebase_creds)
+# Create credentials from dictionary
+cred = credentials.Certificate(firebase_creds_dict)
 
 # Initialize Firebase Admin (only if not already initialized)
 try:
