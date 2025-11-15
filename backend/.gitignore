@@ -1,0 +1,10 @@
+.env
+env/
+*.swp
+app.log
+firebase_config.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+logs/
