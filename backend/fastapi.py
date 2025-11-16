@@ -20,6 +20,11 @@ DB = {"username": {"password": "1234567"}}
                                                                                  
 @app.get("/")                                                                    async def read_root():
         return {"message": "Welcome to the new innovative project!"} 
+
+
+@app.post("/submit_teacher/")
+async def submit_teacher_form(name: str = Form(...), email: str = Form(...)):
+    return {"Form received"}
             
                                                                                  
 @app.post("/auth/login")                                                         def login(data: OAuth2PasswordRequestForm = Depends()):
