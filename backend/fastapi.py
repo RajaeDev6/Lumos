@@ -8,13 +8,14 @@ import json, os
 from google import genai
 from models import teacher
 from services import teacher_service
+from config.settings import settings
 
 
 app = FastAPI()
 
 
-SECRET = "FirstSecretWord"
-os.environ["GEMINI_API_KEY"] = 'YOUR_API_KEY'
+SECRET = settings.FASTAPI_SECRET
+os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
 
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])

@@ -23,6 +23,13 @@ class Settings:
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
     CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
     CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+    # Gemini
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+    # fastapi 
+    FASTAPI_API_KEY = os.getenv("FASTAPI_API_KEY")
+    FASTAPI_SECRET = os.getenv("FASTAPI_SECRET")
     
     @property
     def firebase_credentials_dict(self):
