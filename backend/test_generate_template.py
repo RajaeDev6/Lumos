@@ -3,6 +3,7 @@ import os
 import json
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 import csv
 import io
 from config.settings import settings
@@ -11,30 +12,33 @@ from utils.app_logger import logger
 # --- AI CONFIG ---
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-# -------------------------
-# Utility: load PDF or text
-# -------------------------
+
+# -------------------------------------------------------
+# Utility: load PDF or text file into Gemini-compatible Part
+# -------------------------------------------------------
 def load_file(path):
     ext = path.lower()
 
+    # PDF INPUT
     if ext.endswith(".pdf"):
         with open(path, "rb") as f:
             data = f.read()
+
         return types.Part(
             inline_data=types.Blob(
                 mime_type="application/pdf",
-                data=base64.b64encode(data).decode("utf-8")
+                data=data  # IMPORTANT: raw bytes, NOT base64
             )
         )
 
-    else:
-        with open(path, "r", encoding="utf-8") as f:
-            return types.Part(text=f.read())
+    # TEXT INPUT
+    with open(path, "r", encoding="utf-8") as f:
+        return types.Part(text=f.read())
 
 
-# -------------------------
+# -------------------------------------------------------
 # 1. Extract Questions + Topics
-# -------------------------
+# -------------------------------------------------------
 def extract_questions_with_topics(pdf_path):
     with open(pdf_path, "rb") as f:
         pdf_bytes = f.read()
@@ -42,7 +46,7 @@ def extract_questions_with_topics(pdf_path):
     pdf_input = types.Part(
         inline_data=types.Blob(
             mime_type="application/pdf",
-            data=base64.b64encode(pdf_bytes).decode("utf-8")
+            data=pdf_bytes
         )
     )
 
@@ -68,7 +72,7 @@ RULES FOR EXTRACTION
 6. If the topic is unclear, infer the closest reasonable topic.
 
 ---------------------
-FORMAT STRICTLY REQUIRED:
+STRICT FORMAT:
 ---------------------
 [
   {
@@ -78,56 +82,53 @@ FORMAT STRICTLY REQUIRED:
   }
 ]
 
-Example topics:
-- Mathematics: Algebra, Geometry, Trigonometry, Calculus, Statistics, Measurement
-- English: Reading Comprehension, Vocabulary, Grammar — Tenses, Writing Skills
-- Science: Physics — Forces, Chemistry — Acids, Biology — Cells
-- Other subjects: use clear, curriculum-based terms.
-
-Do NOT output commentary, reasoning, or explanation.
-Return ONLY the JSON array.
+Return ONLY the JSON array. No explanations.
 """
-
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=[types.Part(text=prompt), pdf_input],
-        config=types.GenerateContentConfig(response_mime_type="application/json")
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
 
     return json.loads(response.text)
 
 
-# -------------------------
+# -------------------------------------------------------
 # 2. Compare Teacher vs Student Answers
-# -------------------------
+# -------------------------------------------------------
 def compare_answers(questions, teacher_file, student_file):
     teacher_part = load_file(teacher_file)
     student_part = load_file(student_file)
 
     prompt = f"""
-    You will compare teacher answers vs student answers.
+You will compare TEACHER answers with STUDENT answers.
 
-    QUESTIONS:
-    {json.dumps(questions, indent=2)}
+QUESTIONS:
+{json.dumps(questions, indent=2)}
 
-    STRICT OUTPUT FORMAT:
-    Return ONLY JSON:
-    [
-      {{
-        "question_number": <num>,
-        "topic": "<topic>",
-        "teacher_answer": "<text>",
-        "student_answer": "<text>",
-        "correct": true/false
-      }}
-    ]
+-------------------------
+STRICT OUTPUT FORMAT:
+-------------------------
+Return ONLY JSON:
+[
+  {{
+    "question_number": <num>,
+    "topic": "<topic>",
+    "teacher_answer": "<text>",
+    "student_answer": "<text>",
+    "correct": true/false
+  }}
+]
 
-    RULES:
-    - Match answers based on question number.
-    - Correct if logically equivalent.
-    - If ambiguous, choose FALSE.
-    """
+RULES:
+- Match answers by question number
+- Mark TRUE if answers are logically equivalent
+- Mark FALSE if wrong, missing, empty, or ambiguous
+- Do NOT solve questions, only compare
+"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -136,15 +137,17 @@ def compare_answers(questions, teacher_file, student_file):
             types.Part(text="TEACHER ANSWERS:"), teacher_part,
             types.Part(text="STUDENT ANSWERS:"), student_part
         ],
-        config=types.GenerateContentConfig(response_mime_type="application/json")
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
 
     return json.loads(response.text)
 
 
-# -------------------------
-# 3. Convert to Topic Performance
-# -------------------------
+# -------------------------------------------------------
+# 3. Build Topic Performance Table
+# -------------------------------------------------------
 def compute_topic_scores(results):
     topic_stats = {}
 
@@ -155,25 +158,22 @@ def compute_topic_scores(results):
         if topic not in topic_stats:
             topic_stats[topic] = {"correct": 0, "incorrect": 0}
 
-        if correct:
-            topic_stats[topic]["correct"] += 1
-        else:
-            topic_stats[topic]["incorrect"] += 1
+        topic_stats[topic]["correct" if correct else "incorrect"] += 1
 
     return topic_stats
 
 
-# -------------------------
+# -------------------------------------------------------
 # Main pipeline
-# -------------------------
+# -------------------------------------------------------
 def process_exam(question_pdf, teacher_ans, student_ans):
-    print("📄 Extracting questions...")
+    logger.info("📄 Extracting questions...")
     questions = extract_questions_with_topics(question_pdf)
 
-    print("📝 Comparing answers...")
+    logger.info("📝 Comparing answers...")
     results = compare_answers(questions, teacher_ans, student_ans)
 
-    print("📊 Computing topic performance...")
+    logger.info("📊 Computing topic performance...")
     stats = compute_topic_scores(results)
 
     return {
@@ -183,12 +183,13 @@ def process_exam(question_pdf, teacher_ans, student_ans):
     }
 
 
-# TESTING
+# -------------------------------------------------------
+# TESTING CLI
+# -------------------------------------------------------
 if __name__ == "__main__":
-    qp = input("Question Paper PDF: ").strip()
-    tp = input("Teacher Answers (PDF or txt): ").strip()
-    sp = input("Student Answers (PDF or txt): ").strip()
+    qp = input("Question Paper PDF: ").strip().strip('"')
+    tp = input("Teacher Answers (PDF or txt): ").strip().strip('"')
+    sp = input("Student Answers (PDF or txt): ").strip().strip('"')
 
     output = process_exam(qp, tp, sp)
-
     print(json.dumps(output, indent=2))
