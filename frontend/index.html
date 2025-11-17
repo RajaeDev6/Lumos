@@ -1,447 +1,709 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LessonPlanApp — Prototype</title>
-  <!-- Tailwind Play CDN for quick prototyping -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* small helpers */
-    .hidden-page { display: none; }
-    .active-page { display: block; }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LessonPlanApp — Adaptive Curriculum Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base styles and utility overrides */
+        .page-content {
+            /* Consistent spacing for page content */
+            padding: 1.5rem; 
+        }
+        .hidden-page {
+            display: none;
+        }
+        .active-page {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Style for the active navigation button */
+        .nav-btn.active {
+            font-weight: 600; /* semi-bold */
+            color: #4f46e5; /* indigo-600 */
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        /* Custom modal overlay style */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            z-index: 50;
+        }
+        /* Custom drag-over style */
+        .dropzone.drag-over {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen">
-  <div id="app" class="max-w-7xl mx-auto p-6">
-    <!-- NAVBAR / SIDEBAR (responsive) -->
-    <header class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-teal-400 flex items-center justify-center text-white font-bold">LP</div>
-        <h1 class="text-xl font-semibold">LessonPlanApp</h1>
-      </div>
-      <nav class="hidden md:flex gap-3 items-center">
-        <button data-nav="home" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Home</button>
-        <button data-nav="upload-syllabus" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Upload Syllabus</button>
-        <button data-nav="upload-test" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Upload Test Papers</button>
-        <button data-nav="generate" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Generate Lesson Plan</button>
-        <button data-nav="stats" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Statistics</button>
-        <button data-nav="profile" class="nav-btn px-3 py-2 rounded hover:bg-gray-100">Profile</button>
-        <button id="logoutBtn" class="px-3 py-2 bg-red-500 text-white rounded">Logout</button>
-      </nav>
-      <div class="md:hidden">
-        <select id="mobileNav" class="border rounded p-2">
-          <option value="home">Home</option>
-          <option value="upload-syllabus">Upload Syllabus</option>
-          <option value="upload-test">Upload Test Papers</option>
-          <option value="generate">Generate Lesson Plan</option>
-          <option value="stats">Statistics</option>
-          <option value="profile">Profile</option>
-        </select>
-      </div>
-    </header>
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6">
 
-    <!-- PAGES -->
-    <!-- AUTH PAGE (Login/Register) -->
-    <section id="auth" class="active-page bg-white rounded-lg p-6 shadow">
-      <div class="md:flex md:space-x-6">
-        <div class="md:w-1/2 p-6 flex items-center justify-center">
-          <div class="space-y-4">
-            <h2 class="text-2xl font-semibold">Welcome back</h2>
-            <p class="text-gray-600">Sign in to manage syllabi and generate adaptive lesson plans.</p>
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=1d2b6a4f6f9f7c75b8e2d806c3f6a2e6" alt="illustration" class="rounded shadow mt-4 hidden md:block">
-          </div>
-        </div>
-        <div class="md:w-1/2 p-6">
-          <div id="loginForm" class="space-y-4">
-            <h3 class="font-semibold">Login</h3>
-            <input id="loginEmail" placeholder="Email or username" class="w-full border p-2 rounded" />
-            <input id="loginPassword" type="password" placeholder="Password" class="w-full border p-2 rounded" />
-            <div class="flex justify-between items-center text-sm">
-              <a href="#" id="forgotLink" class="text-indigo-600">Forgot Password?</a>
-              <button id="toRegister" class="text-indigo-600">Create account</button>
+        <header class="sticky top-0 bg-white shadow-md rounded-lg p-4 mb-6 z-40">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-teal-400 flex items-center justify-center text-white font-extrabold text-xl">LP</div>
+                    <h1 class="text-lg sm:text-xl font-semibold text-gray-900">LessonPlanApp</h1>
+                </div>
+
+                <nav id="desktopNav" class="hidden lg:flex gap-1 items-center">
+                    <button data-nav="home" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Home</button>
+                    <button data-nav="upload-syllabus" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Upload Syllabus</button>
+                    <button data-nav="upload-test" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Upload Test Papers</button>
+                    <button data-nav="generate" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Generate Lesson Plan</button>
+                    <button data-nav="stats" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Statistics</button>
+                    <button data-nav="profile" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Profile</button>
+                </nav>
+
+                <div class="flex items-center gap-3">
+                    <button id="logoutBtn" class="px-3 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors text-sm">Logout</button>
+                    <div class="lg:hidden">
+                        <select id="mobileNav" class="border border-gray-300 rounded-lg p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </select>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-2">
-              <button id="loginBtn" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded">Login</button>
-              <button id="guestBtn" class="flex-1 border px-4 py-2 rounded">Try demo</button>
+        </header>
+        
+        <main id="contentArea">
+            <section id="auth" class="active-page bg-white rounded-xl shadow-xl page-content">
+                <div class="lg:flex lg:space-x-12">
+                    <div class="hidden lg:block lg:w-1/2 p-6 flex items-center justify-center bg-indigo-50/50 rounded-l-lg">
+                        <div class="space-y-4 max-w-sm">
+                            <h2 class="text-3xl font-bold text-gray-900">Welcome Back</h2>
+                            <p class="text-gray-600">Sign in to manage syllabi and generate adaptive lesson plans powered by Gemini AI.</p>
+                            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=1d2b6a4f6f9f7c75b8e2d806c3f6a2e6" alt="Teachers collaborating" class="rounded-lg shadow-2xl mt-8">
+                        </div>
+                    </div>
+
+                    <div class="w-full lg:w-1/2 p-4 sm:p-6">
+                        
+                        <div id="loginForm" class="space-y-5">
+                            <h3 class="text-xl font-semibold">Login</h3>
+                            <input id="loginEmail" type="email" placeholder="Email or username" aria-label="Email" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required />
+                            <input id="loginPassword" type="password" placeholder="Password" aria-label="Password" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required />
+                            
+                            <div class="flex justify-between items-center text-sm">
+                                <a href="#" class="text-indigo-600 hover:text-indigo-700 transition-colors">Forgot Password?</a>
+                                <button id="toRegister" class="text-indigo-600 hover:text-indigo-700 transition-colors">Create account</button>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <button id="loginBtn" class="flex-1 bg-indigo-600 text-white font-semibold px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors">Login</button>
+                                <button id="guestBtn" class="flex-1 border border-gray-300 text-gray-700 font-medium px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">Try Demo</button>
+                            </div>
+
+                            <div class="relative flex items-center py-5">
+                                <div class="flex-grow border-t border-gray-200"></div>
+                                <span class="flex-shrink mx-4 text-gray-500 text-sm">or sign in with</span>
+                                <div class="flex-grow border-t border-gray-200"></div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button class="flex-1 border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition-colors">Google</button>
+                                <button class="flex-1 border border-gray-300 p-3 rounded-lg hover:bg-gray-50 transition-colors">Microsoft</button>
+                            </div>
+                        </div>
+
+                        <div id="registerForm" class="space-y-5 hidden">
+                            <h3 class="text-xl font-semibold">Create account</h3>
+                            <input id="regName" placeholder="Full name" aria-label="Full name" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-teal-500 focus:border-teal-500" />
+                            <input id="regEmail" type="email" placeholder="Email" aria-label="Email" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-teal-500 focus:border-teal-500" />
+                            <input id="regPass" type="password" placeholder="Password" aria-label="Password" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-teal-500 focus:border-teal-500" />
+                            <input id="regPass2" type="password" placeholder="Confirm Password" aria-label="Confirm Password" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-teal-500 focus:border-teal-500" />
+                            
+                            <label class="flex items-center gap-2 text-sm text-gray-600">
+                                <input id="termsChk" type="checkbox" class="rounded text-teal-600 focus:ring-teal-500" />
+                                I accept the <a href="#" class="text-teal-600 hover:underline">Terms & Conditions</a>
+                            </label>
+
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <button id="registerBtn" class="flex-1 bg-teal-500 text-white font-semibold px-4 py-3 rounded-lg hover:bg-teal-600 transition-colors">Register</button>
+                                <button id="toLogin" class="flex-1 border border-gray-300 text-gray-700 font-medium px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">Back to login</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="home" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Hi <span id="userName">Teacher</span>, your curriculum insights are ready!</h2>
+                            <p class="text-gray-600 mt-1">Quick actions and recent uploads overview.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="uploadQuick" class="flex-1 sm:flex-none px-3 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors text-sm">Upload Syllabus</button>
+                            <button id="genQuick" class="flex-1 sm:flex-none px-3 py-2 bg-teal-500 text-white font-medium rounded-lg hover:bg-teal-600 transition-colors text-sm">Generate Lesson Plan</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                        <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
+                            <div class="text-sm text-indigo-700 font-medium">Syllabi uploaded</div>
+                            <div id="statSyllabus" class="text-3xl font-extrabold text-indigo-900 mt-1">0</div>
+                        </div>
+                        <div class="p-4 bg-teal-50 border border-teal-200 rounded-lg shadow-sm">
+                            <div class="text-sm text-teal-700 font-medium">Lesson plans generated</div>
+                            <div id="statPlans" class="text-3xl font-extrabold text-teal-900 mt-1">0</div>
+                        </div>
+                        <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg shadow-sm">
+                            <div class="text-sm text-gray-600 font-medium">Test papers uploaded</div>
+                            <div id="statTests" class="text-3xl font-extrabold text-gray-800 mt-1">0</div>
+                        </div>
+                        <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg shadow-sm">
+                            <div class="text-sm text-gray-600 font-medium">Recent activity</div>
+                            <div id="statActivity" class="text-2xl font-bold text-gray-800 mt-1">—</div>
+                        </div>
+                    </div>
+
+                    <h3 class="mt-8 font-bold text-lg border-b pb-2">Recent Uploads</h3>
+                    <div id="recentUploads" class="mt-4 space-y-3">
+                        <div class="text-sm text-gray-500">No uploads yet.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="upload-syllabus" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <div class="flex items-center justify-between mb-6 border-b pb-3">
+                        <div class="text-sm text-gray-500">Upload Syllabus</div>
+                        <div class="text-xs sm:text-sm text-gray-500 font-medium">Accepted: PDF, DOCX, XLSX</div>
+                    </div>
+                    
+                    <div id="syllabusDrop" role="button" aria-controls="syllPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-lg font-medium mb-4">Drag your syllabus here or click to upload</p>
+                        <input id="syllabusInput" type="file" accept=".pdf,.docx,.xlsx" class="sr-only" />
+                        <button id="browseSyllabus" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Browse files</button>
+                    </div>
+
+                    <div id="syllPreview" class="mt-6 hidden p-4 border border-indigo-300 rounded-lg bg-indigo-50">
+                        <div class="flex items-center justify-between">
+                             <div id="syllFileInfo" class="font-medium text-indigo-900"></div>
+                             <button id="syllCancel" aria-label="Cancel upload" class="text-sm text-indigo-700 hover:text-indigo-900">Cancel</button>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded h-2 mt-2 overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <div id="syllProgress" class="h-2 bg-indigo-600 w-0 transition-all duration-300 ease-out"></div>
+                        </div>
+                        <div class="mt-4 flex gap-3 justify-end">
+                            <button id="syllUpload" class="px-4 py-2 bg-teal-500 text-white font-medium rounded-lg hover:bg-teal-600 transition-colors">Confirm / Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="upload-test" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <div class="text-sm text-gray-500 mb-6 border-b pb-3"> Upload Test Papers</div>
+
+                    <div id="noSyllAlert" class="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded mb-6" role="alert">
+                        <span class="font-semibold">Attention:</span> Please upload syllabus first to contextualize test data.
+                    </div>
+
+                    <div id="testDrop" role="button" aria-controls="testPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-lg font-medium mb-4">Drag your test paper here or click to upload</p>
+                        <input id="testInput" type="file" accept=".pdf,.docx,.xlsx" class="sr-only" />
+                        <button id="browseTest" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Browse files</button>
+                    </div>
+                    
+                    <div id="testPreview" class="mt-6 hidden p-4 border border-indigo-300 rounded-lg bg-indigo-50">
+                        <div class="flex items-center justify-between">
+                            <div id="testFileInfo" class="font-medium text-indigo-900"></div>
+                            <button id="testCancel" aria-label="Cancel upload" class="text-sm text-indigo-700 hover:text-indigo-900">Cancel</button>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded h-2 mt-2 overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <div id="testProgress" class="h-2 bg-indigo-600 w-0 transition-all duration-300 ease-out"></div>
+                        </div>
+                        <div class="mt-4 flex gap-3 justify-end">
+                            <button id="testUpload" class="px-4 py-2 bg-teal-500 text-white font-medium rounded-lg hover:bg-teal-600 transition-colors">Confirm / Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="generate" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <h3 class="text-xl font-semibold mb-4 border-b pb-3">Generate Adaptive Lesson Plan</h3>
+                    
+                    <div class="mt-4 p-4 bg-indigo-50 border border-indigo-300 rounded-lg">
+                        <div class="flex flex-wrap items-center gap-4 text-sm font-medium text-indigo-900">
+                            <label class="flex items-center gap-2"><input id="chkSyll" type="checkbox" disabled class="rounded text-indigo-600 border-indigo-300" /> Syllabus Uploaded</label>
+                            <label class="flex items-center gap-2"><input id="chkTest" type="checkbox" disabled class="rounded text-indigo-600 border-indigo-300" /> Test Papers Uploaded</label>
+                            <span class="text-gray-600 ml-auto hidden sm:block">AI analysis ready when both are checked.</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Gemini will analyze the syllabus and test data to identify weak areas and propose an adaptive, personalized plan.</p>
+                        <div class="mt-5">
+                            <button id="generateBtn" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50" disabled>Generate Lesson Plan</button>
+                        </div>
+                    </div>
+
+                    <div id="generateResult" class="mt-8 hidden">
+                        <h4 class="text-lg font-bold mb-3">AI Proposed Curriculum</h4>
+                        <div class="flex flex-col lg:flex-row gap-5">
+                            
+                            <div class="flex-grow p-5 border border-gray-200 rounded-lg bg-gray-50/70">
+                                <h4 class="font-bold text-lg text-gray-800">Overview & Summary</h4>
+                                <div id="planOverview" class="mt-3 text-sm text-gray-700 whitespace-pre-wrap min-h-[50px]">—</div>
+                            </div>
+                            
+                            <div class="lg:w-1/3 p-5 border border-green-300 rounded-lg bg-white shadow-md">
+                                <h4 class="font-bold text-lg text-green-700">Actions</h4>
+                                <div class="mt-3 space-y-3">
+                                    <button id="acceptPlan" class="w-full px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">Accept / Finalize</button>
+                                    <button id="editPlan" class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">Review & Edit</button>
+                                    <button id="downloadPlan" class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">Download (PDF/DOCX)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="stats" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <h3 class="text-xl font-semibold mb-4 border-b pb-3">Statistics & Usage History</h3>
+                    <div class="mt-4 grid md:grid-cols-2 gap-6">
+                        <div class="p-5 border border-gray-200 rounded-lg bg-gray-50">
+                            <h4 class="font-bold text-lg text-gray-800">Current Usage</h4>
+                            <ul class="text-base mt-3 space-y-2 text-gray-700">
+                                <li>Syllabi uploaded: <span id="listSyllCount" class="font-bold text-indigo-600">0</span></li>
+                                <li>Lessons generated: <span id="listPlanCount" class="font-bold text-teal-600">0</span></li>
+                                <li>Test papers uploaded: <span id="listTestCount" class="font-bold text-gray-800">0</span></li>
+                            </ul>
+                        </div>
+                        <div class="p-5 border border-gray-200 rounded-lg bg-white">
+                            <h4 class="font-bold text-lg text-gray-800">Previous Uploads & Plans</h4>
+                            <div id="uploadsTable" class="mt-3 text-sm text-gray-700 space-y-1">
+                                <div class="text-sm text-gray-500">No uploads yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="profile" class="hidden-page mt-6">
+                <div class="bg-white rounded-xl shadow-lg page-content">
+                    <h3 class="text-xl font-semibold mb-4 border-b pb-3">Profile & Settings</h3>
+                    <div class="mt-4 grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-bold text-lg mb-3">User Details</h4>
+                            <label for="profName" class="text-sm font-medium block mt-2">Name</label>
+                            <input id="profName" type="text" class="w-full border border-gray-300 p-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                            
+                            <label for="profEmail" class="text-sm font-medium block mt-4">Email</label>
+                            <input id="profEmail" type="email" class="w-full border border-gray-300 p-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" readonly />
+                            
+                            <label for="profPass" class="text-sm font-medium block mt-4">New Password</label>
+                            <input id="profPass" type="password" placeholder="Leave blank to keep current password" class="w-full border border-gray-300 p-2 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                            
+                            <div class="mt-5">
+                                <button id="saveProfile" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">Save</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-lg mb-3">Application Preferences</h4>
+                            <fieldset class="mt-2 space-y-3 p-4 border rounded-lg bg-gray-50">
+                                <legend class="font-medium text-gray-700">Notifications</legend>
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input id="notifyChk" type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" /> 
+                                    Email notifications for plan finalization
+                                </label>
+                            </fieldset>
+
+                            <fieldset class="mt-5 space-y-3 p-4 border rounded-lg bg-gray-50">
+                                <legend class="font-medium text-gray-700">Default Download Format</legend>
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input id="formatPdf" type="radio" name="format" checked class="text-indigo-600 focus:ring-indigo-500" /> Default PDF
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input id="formatDocx" type="radio" name="format" class="text-indigo-600 focus:ring-indigo-500" /> Default DOCX
+                                </label>
+                            </fieldset>
+
+                            <div class="mt-5">
+                                <h5 class="font-medium text-lg">Subscription</h5>
+                                <div class="text-base text-green-700 mt-2 p-3 bg-green-50 rounded-lg border border-green-300">
+                                    **Free Prototype** — upgrade options available upon official launch.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div id="modal" class="fixed inset-0 modal-overlay hidden items-center justify-center p-4">
+            <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 transform transition-all scale-100 opacity-100" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                <div class="flex items-center justify-between border-b pb-3 mb-4">
+                    <h3 id="modalTitle" class="text-xl font-bold">Lesson Plan Review & Edit</h3>
+                    <button id="closeModal" aria-label="Close modal" class="text-gray-600 text-2xl hover:text-gray-900 transition-colors">&times;</button>
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-4">Edit the generated plan below. Use Markdown for formatting, or paste into a document editor.</p>
+
+                <div class="mt-2">
+                    <div contenteditable id="planEditor" role="textbox" aria-multiline="true" class="min-h-[300px] border border-gray-300 p-4 rounded-lg text-sm bg-white focus:ring-indigo-500 focus:border-indigo-500 outline-none whitespace-pre-wrap">
+                        (The editable plan content will appear here after generation)
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
+                    <button id="saveChanges" class="px-5 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">Save Changes</button>
+                    <button id="finalizeFromModal" class="px-5 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">Accept Plan</button>
+                </div>
             </div>
-            <div class="text-center text-sm text-gray-500">or sign in with</div>
-            <div class="flex gap-2">
-              <button class="flex-1 border p-2 rounded">Google</button>
-              <button class="flex-1 border p-2 rounded">Microsoft</button>
-            </div>
-          </div>
-
-          <div id="registerForm" class="space-y-4 hidden">
-            <h3 class="font-semibold">Create account</h3>
-            <input id="regName" placeholder="Full name" class="w-full border p-2 rounded" />
-            <input id="regEmail" placeholder="Email" class="w-full border p-2 rounded" />
-            <input id="regPass" type="password" placeholder="Password" class="w-full border p-2 rounded" />
-            <input id="regPass2" type="password" placeholder="Confirm Password" class="w-full border p-2 rounded" />
-            <label class="flex items-center gap-2 text-sm"><input id="termsChk" type="checkbox" /> I accept the <a href="#" class="text-indigo-600">Terms & Conditions</a></label>
-            <div class="flex gap-2">
-              <button id="registerBtn" class="flex-1 bg-teal-500 text-white px-4 py-2 rounded">Register</button>
-              <button id="toLogin" class="flex-1 border px-4 py-2 rounded">Back to login</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Dashboard Home -->
-    <section id="home" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-semibold">Hi <span id="userName">Teacher</span>, your curriculum insights are ready!</h2>
-            <p class="text-gray-600">Quick actions and recent uploads.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="uploadQuick" class="px-3 py-2 bg-indigo-600 text-white rounded">Upload Syllabus</button>
-            <button id="genQuick" class="px-3 py-2 bg-teal-500 text-white rounded">Generate Lesson Plan</button>
-          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div class="p-4 bg-white border rounded shadow-sm">
-            <div class="text-sm text-gray-500">Syllabi uploaded</div>
-            <div id="statSyllabus" class="text-2xl font-bold">0</div>
-          </div>
-          <div class="p-4 bg-white border rounded shadow-sm">
-            <div class="text-sm text-gray-500">Lesson plans generated</div>
-            <div id="statPlans" class="text-2xl font-bold">0</div>
-          </div>
-          <div class="p-4 bg-white border rounded shadow-sm">
-            <div class="text-sm text-gray-500">Test papers uploaded</div>
-            <div id="statTests" class="text-2xl font-bold">0</div>
-          </div>
-          <div class="p-4 bg-white border rounded shadow-sm">
-            <div class="text-sm text-gray-500">Recent activity</div>
-            <div id="statActivity" class="text-2xl font-bold">—</div>
-          </div>
-        </div>
-
-        <h3 class="mt-6 font-semibold">Recent uploads</h3>
-        <div id="recentUploads" class="mt-2 space-y-2">
-          <div class="text-sm text-gray-500">No uploads yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Upload Syllabus Page -->
-    <section id="upload-syllabus" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <div class="flex items-center justify-between mb-4">
-          <div class="text-sm text-gray-500">Home > Upload Syllabus</div>
-          <div class="text-sm text-gray-500">Accepted: PDF, DOCX, XLSX</div>
-        </div>
-        <div id="syllabusDrop" class="border-2 border-dashed border-gray-200 rounded p-8 text-center bg-gray-50">
-          <p class="mb-4">Drag your syllabus here or click to upload</p>
-          <input id="syllabusInput" type="file" accept=".pdf,.docx,.xlsx" class="hidden" />
-          <button id="browseSyllabus" class="px-4 py-2 bg-indigo-600 text-white rounded">Browse files</button>
-        </div>
-
-        <div id="syllPreview" class="mt-4 hidden p-4 border rounded bg-white">
-          <div id="syllFileInfo"></div>
-          <div class="w-full bg-gray-100 rounded h-3 mt-2 overflow-hidden"><div id="syllProgress" class="h-3 bg-indigo-600 w-0"></div></div>
-          <div class="mt-3 flex gap-2">
-            <button id="syllCancel" class="px-3 py-2 border rounded">Cancel</button>
-            <button id="syllUpload" class="px-3 py-2 bg-teal-500 text-white rounded">Confirm / Upload</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Upload Test Papers Page -->
-    <section id="upload-test" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <div class="flex items-center justify-between mb-4">
-          <div class="text-sm text-gray-500">Home > Upload Test Papers</div>
-        </div>
-        <div id="noSyllAlert" class="p-4 bg-yellow-50 border-l-4 border-yellow-300 text-yellow-700 hidden">Please upload syllabus first.</div>
-
-        <div id="testDrop" class="border-2 border-dashed border-gray-200 rounded p-8 text-center bg-gray-50">
-          <p class="mb-4">Drag your test paper here or click to upload</p>
-          <input id="testInput" type="file" accept=".pdf,.docx,.xlsx" class="hidden" />
-          <button id="browseTest" class="px-4 py-2 bg-indigo-600 text-white rounded">Browse files</button>
-        </div>
-
-        <div id="testPreview" class="mt-4 hidden p-4 border rounded bg-white">
-          <div id="testFileInfo"></div>
-          <div class="w-full bg-gray-100 rounded h-3 mt-2 overflow-hidden"><div id="testProgress" class="h-3 bg-indigo-600 w-0"></div></div>
-          <div class="mt-3 flex gap-2">
-            <button id="testCancel" class="px-3 py-2 border rounded">Cancel</button>
-            <button id="testUpload" class="px-3 py-2 bg-teal-500 text-white rounded">Confirm / Upload</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Generate Lesson Plan Page -->
-    <section id="generate" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <h3 class="font-semibold">Generate Lesson Plan</h3>
-        <div class="mt-4 p-4 bg-gray-50 rounded">
-          <div class="flex items-center gap-3">
-            <label class="flex items-center gap-2"><input id="chkSyll" type="checkbox" disabled /> Syllabus Uploaded</label>
-            <label class="flex items-center gap-2"><input id="chkTest" type="checkbox" disabled /> Test Papers Uploaded</label>
-          </div>
-          <p class="text-sm text-gray-500 mt-2">AI will analyze uploaded files and propose an adaptive plan.</p>
-          <div class="mt-4">
-            <button id="generateBtn" class="px-4 py-2 bg-indigo-600 text-white rounded disabled:opacity-50" disabled>Generate Lesson Plan</button>
-          </div>
-        </div>
-
-        <div id="generateResult" class="mt-6 hidden">
-          <div class="flex gap-3">
-            <div class="flex-1 p-4 border rounded bg-white">
-              <h4 class="font-semibold">Overview</h4>
-              <div id="planOverview" class="mt-2 text-sm text-gray-700">—</div>
-            </div>
-            <div class="w-1/3 p-4 border rounded bg-white">
-              <h4 class="font-semibold">Actions</h4>
-              <div class="mt-2 space-y-2">
-                <button id="acceptPlan" class="w-full px-3 py-2 bg-green-500 text-white rounded">Accept / Finalize</button>
-                <button id="editPlan" class="w-full px-3 py-2 border rounded">Edit</button>
-                <button id="downloadPlan" class="w-full px-3 py-2 border rounded">Download (PDF)</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Modal: Review & Edit -->
-    <div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-6">
-      <div class="w-full max-w-3xl bg-white rounded shadow p-6">
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Lesson Plan Preview</h3>
-          <button id="closeModal" class="text-gray-600">Close</button>
-        </div>
-        <div class="mt-4">
-          <div contenteditable id="planEditor" class="min-h-[200px] border p-4 rounded text-sm">(editable plan will appear here)</div>
-        </div>
-        <div class="mt-4 flex gap-2 justify-end">
-          <button id="saveChanges" class="px-3 py-2 bg-indigo-600 text-white rounded">Save Changes</button>
-          <button id="finalizeFromModal" class="px-3 py-2 bg-green-500 text-white rounded">Accept Plan</button>
-        </div>
-      </div>
     </div>
 
-    <!-- Statistics & Previous Uploads -->
-    <section id="stats" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <h3 class="font-semibold">Statistics & Previous Uploads</h3>
-        <div class="mt-4 grid md:grid-cols-2 gap-4">
-          <div class="p-4 border rounded bg-white">
-            <h4 class="font-medium">Usage</h4>
-            <ul class="text-sm mt-2 space-y-1">
-              <li>Syllabi uploaded: <span id="listSyllCount">0</span></li>
-              <li>Lessons generated: <span id="listPlanCount">0</span></li>
-              <li>Test papers uploaded: <span id="listTestCount">0</span></li>
-            </ul>
-          </div>
-          <div class="p-4 border rounded bg-white">
-            <h4 class="font-medium">Previous uploads</h4>
-            <div id="uploadsTable" class="mt-2 text-sm text-gray-700">No uploads yet.</div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <script type="module">
+        // -----------------------------------------------------
+        // 1. STATE MANAGEMENT
+        // -----------------------------------------------------
+        const state = {
+            loggedIn: false,
+            name: 'Teacher',
+            email: 'teacher@lessonplanapp.com',
+            syllabi: [],
+            tests: [],
+            plansGenerated: 0,
+            currentPlanOverview: '',
+        };
 
-    <!-- Profile / Settings -->
-    <section id="profile" class="hidden-page mt-6">
-      <div class="bg-white rounded-lg p-6 shadow">
-        <h3 class="font-semibold">Profile & Settings</h3>
-        <div class="mt-4 grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm">Name</label>
-            <input id="profName" class="w-full border p-2 rounded" />
-            <label class="text-sm mt-3">Email</label>
-            <input id="profEmail" class="w-full border p-2 rounded" />
-            <label class="text-sm mt-3">Password</label>
-            <input id="profPass" type="password" class="w-full border p-2 rounded" />
-            <div class="mt-3">
-              <button id="saveProfile" class="px-3 py-2 bg-indigo-600 text-white rounded">Save</button>
-            </div>
-          </div>
-          <div>
-            <h4 class="font-medium">Preferences</h4>
-            <div class="mt-2 space-y-2">
-              <label class="flex items-center gap-2"><input id="notifyChk" type="checkbox" /> Email notifications</label>
-              <label class="flex items-center gap-2"><input id="formatPdf" type="radio" name="format" /> Default PDF</label>
-              <label class="flex items-center gap-2"><input id="formatDocx" type="radio" name="format" /> Default DOCX</label>
-            </div>
-            <div class="mt-4">
-              <h5 class="font-medium">Subscription</h5>
-              <div class="text-sm text-gray-600 mt-2">Free Prototype — upgrade options later</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+        // -----------------------------------------------------
+        // 2. DOM ELEMENT CACHE
+        // -----------------------------------------------------
+        const DOM = {
+            pages: document.querySelectorAll('section[id]'),
+            navBtns: document.querySelectorAll('.nav-btn'),
+            mobileNav: document.getElementById('mobileNav'),
+            // Auth
+            auth: document.getElementById('auth'),
+            loginForm: document.getElementById('loginForm'),
+            registerForm: document.getElementById('registerForm'),
+            loginBtn: document.getElementById('loginBtn'),
+            guestBtn: document.getElementById('guestBtn'),
+            // Dashboard
+            userName: document.getElementById('userName'),
+            statSyllabus: document.getElementById('statSyllabus'),
+            statTests: document.getElementById('statTests'),
+            statPlans: document.getElementById('statPlans'),
+            recentUploads: document.getElementById('recentUploads'),
+            // Upload
+            syllabusDrop: document.getElementById('syllabusDrop'),
+            syllabusInput: document.getElementById('syllabusInput'),
+            syllPreview: document.getElementById('syllPreview'),
+            testDrop: document.getElementById('testDrop'),
+            testInput: document.getElementById('testInput'),
+            testPreview: document.getElementById('testPreview'),
+            noSyllAlert: document.getElementById('noSyllAlert'),
+            // Generate
+            chkSyll: document.getElementById('chkSyll'),
+            chkTest: document.getElementById('chkTest'),
+            generateBtn: document.getElementById('generateBtn'),
+            generateResult: document.getElementById('generateResult'),
+            planOverview: document.getElementById('planOverview'),
+            // Modal
+            modal: document.getElementById('modal'),
+            planEditor: document.getElementById('planEditor'),
+            // Stats
+            listSyllCount: document.getElementById('listSyllCount'),
+            listPlanCount: document.getElementById('listPlanCount'),
+            listTestCount: document.getElementById('listTestCount'),
+            uploadsTable: document.getElementById('uploadsTable'),
+        };
 
-  </div>
+        // -----------------------------------------------------
+        // 3. CORE UI & NAVIGATION FUNCTIONS
+        // -----------------------------------------------------
+        
+        /** Shows the requested page and updates navigation state. */
+        function showPage(pageId) {
+            if (!state.loggedIn && pageId !== 'auth') {
+                pageId = 'auth'; // Guard: redirect to login if not logged in
+            }
 
-  <script type="module">
-    // Simple single-file app using ES modules style (all inside for prototype)
-    const state = {
-      loggedIn: false,
-      name: 'Teacher',
-      syllabi: [],
-      tests: [],
-      plansGenerated: 0,
-    };
+            DOM.pages.forEach(s => {
+                s.classList.toggle('active-page', s.id === pageId);
+                s.classList.toggle('hidden-page', s.id !== pageId);
+            });
 
-    // Navigation helpers
-    function showPage(id){
-      document.querySelectorAll('section[id]').forEach(s=>{
-        if(s.id === id){ s.classList.remove('hidden-page'); s.classList.add('active-page'); }
-        else { s.classList.remove('active-page'); s.classList.add('hidden-page'); }
-      });
-      // sync nav buttons active state
-    }
+            // Update desktop nav button active state
+            DOM.navBtns.forEach(b => {
+                b.classList.toggle('active', b.dataset.nav === pageId);
+            });
+            
+            // Update mobile select (if applicable)
+            if (DOM.mobileNav.value !== pageId) {
+                DOM.mobileNav.value = pageId;
+            }
+        }
+        
+        /** Populates the mobile navigation dropdown. */
+        function setupMobileNav() {
+            const navItems = [
+                { id: 'home', name: 'Home' },
+                { id: 'upload-syllabus', name: 'Upload Syllabus' },
+                { id: 'upload-test', name: 'Upload Test Papers' },
+                { id: 'generate', name: 'Generate Lesson Plan' },
+                { id: 'stats', name: 'Statistics' },
+                { id: 'profile', name: 'Profile' },
+            ];
 
-    // Init UI binds
-    const navBtns = document.querySelectorAll('.nav-btn');
-    navBtns.forEach(b=> b.addEventListener('click', ()=> showPage(b.dataset.nav)));
-    document.getElementById('mobileNav').addEventListener('change',(e)=> showPage(e.target.value));
+            DOM.mobileNav.innerHTML = navItems.map(item => 
+                `<option value="${item.id}">${item.name}</option>`
+            ).join('');
+        }
 
-    // Auth flows (very basic for prototype)
-    document.getElementById('loginBtn').addEventListener('click', ()=>{
-      const email = document.getElementById('loginEmail').value.trim();
-      const pw = document.getElementById('loginPassword').value.trim();
-      if(!email || !pw){ alert('Please enter credentials'); return; }
-      state.loggedIn = true; state.name = email.split('@')[0];
-      afterLogin();
-    });
-    document.getElementById('guestBtn').addEventListener('click', ()=>{ state.loggedIn=true; afterLogin(); });
-    document.getElementById('toRegister').addEventListener('click', ()=>{ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('registerForm').classList.remove('hidden'); });
-    document.getElementById('toLogin').addEventListener('click', ()=>{ document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('registerForm').classList.add('hidden'); });
-    document.getElementById('registerBtn').addEventListener('click', ()=>{
-      const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const p1 = document.getElementById('regPass').value;
-      const p2 = document.getElementById('regPass2').value;
-      const ok = document.getElementById('termsChk').checked;
-      if(!name||!email||!p1||p1!==p2||!ok){ alert('Please complete the form and accept terms'); return; }
-      state.loggedIn = true; state.name = name; afterLogin();
-    });
+        /** Updates all statistics and UI elements based on global state. */
+        function updateStats() {
+            // Dashboard Cards
+            DOM.userName.textContent = state.name;
+            DOM.statSyllabus.textContent = state.syllabi.length;
+            DOM.statTests.textContent = state.tests.length;
+            DOM.statPlans.textContent = state.plansGenerated;
 
-    function afterLogin(){
-      document.getElementById('userName').textContent = state.name;
-      document.getElementById('profName').value = state.name;
-      document.getElementById('profEmail').value = state.name+'@example.com';
-      showPage('home');
-    }
+            // Recent Uploads
+            const allUploads = state.syllabi.concat(state.tests).sort((a,b)=> new Date(b.date) - new Date(a.date)).slice(0, 5);
+            DOM.recentUploads.innerHTML = allUploads.map(u => 
+                `<div class="p-3 border rounded-lg bg-white shadow-sm flex justify-between items-center">
+                    <div class="font-medium">${u.name}</div>
+                    <div class="text-xs text-gray-500">${new Date(u.date).toLocaleDateString()}</div>
+                </div>`
+            ).join('') || '<div class="text-sm text-gray-500">No uploads yet.</div>';
 
-    document.getElementById('logoutBtn').addEventListener('click', ()=>{
-      if(confirm('Logout?')){ state.loggedIn=false; showPage('auth'); }
-    });
+            // Generate Checklist & Button State
+            DOM.chkSyll.checked = state.syllabi.length > 0;
+            DOM.chkTest.checked = state.tests.length > 0;
+            DOM.generateBtn.disabled = !(state.syllabi.length > 0 && state.tests.length > 0);
+            DOM.noSyllAlert.classList.toggle('hidden', state.syllabi.length > 0);
 
-    // Quick actions
-    document.getElementById('uploadQuick').addEventListener('click', ()=> showPage('upload-syllabus'));
-    document.getElementById('genQuick').addEventListener('click', ()=> showPage('generate'));
+            // Stats Page Lists
+            DOM.listSyllCount.textContent = state.syllabi.length;
+            DOM.listTestCount.textContent = state.tests.length;
+            DOM.listPlanCount.textContent = state.plansGenerated;
+            DOM.uploadsTable.innerHTML = allUploads.map((u, i) => 
+                `<div class="flex justify-between p-2 border-b last:border-b-0 text-sm">
+                    <div class="${u.type === 'plan' ? 'text-teal-600 font-medium' : ''}">${u.name}</div>
+                    <div class="text-xs text-gray-500">${new Date(u.date).toLocaleDateString()}</div>
+                </div>`
+            ).join('') || '<div class="text-sm text-gray-500">No uploads yet.</div>';
+        }
 
-    // Syllabus upload logic (mocked upload)
-    const syllabusInput = document.getElementById('syllabusInput');
-    document.getElementById('browseSyllabus').addEventListener('click', ()=> syllabusInput.click());
-    document.getElementById('syllabusDrop').addEventListener('click', ()=> syllabusInput.click());
-    syllabusInput.addEventListener('change', (e)=> handleFileSelect(e.target.files[0], 'syll'));
+        // -----------------------------------------------------
+        // 4. AUTHENTICATION LOGIC
+        // -----------------------------------------------------
 
-    function handleFileSelect(file, type){
-      if(!file) return;
-      const preview = document.getElementById(type==='syll' ? 'syllPreview' : 'testPreview');
-      preview.classList.remove('hidden');
-      const info = document.getElementById(type==='syll' ? 'syllFileInfo' : 'testFileInfo');
-      info.textContent = `${file.name} — ${Math.round(file.size/1024)} KB`;
-      const progressEl = document.getElementById(type==='syll' ? 'syllProgress' : 'testProgress');
-      progressEl.style.width = '0%';
-      // store temporarily
-      preview._file = file;
-    }
+        /** Executes after successful login/demo entry. */
+        function afterLogin() {
+            DOM.auth.classList.add('hidden-page');
+            document.getElementById('contentArea').classList.remove('hidden'); // Hide content area before login if desired
+            updateStats(); // Initial UI render
+            showPage('home'); // Go to Dashboard
+        }
 
-    // Confirm upload
-    document.getElementById('syllUpload').addEventListener('click', ()=>{
-      const preview = document.getElementById('syllPreview');
-      const f = preview._file; if(!f) return alert('No file selected');
-      // mock upload progress
-      const prog = document.getElementById('syllProgress');
-      let p=0; const iv=setInterval(()=>{ p+=10; prog.style.width = p+'%'; if(p>=100){ clearInterval(iv); onSyllabusUploaded(f); } }, 150);
-    });
-    document.getElementById('syllCancel').addEventListener('click', ()=>{ document.getElementById('syllPreview').classList.add('hidden'); });
+        // -----------------------------------------------------
+        // 5. UPLOAD LOGIC
+        // -----------------------------------------------------
 
-    function onSyllabusUploaded(file){
-      state.syllabi.push({name: file.name, date: new Date().toISOString()});
-      updateStats();
-      document.getElementById('syllPreview').classList.add('hidden');
-      alert('Syllabus uploaded');
-    }
+        /** Handles file selection and sets up the preview area. */
+        function handleFileSelect(file, type) {
+            if (!file) return;
+            const preview = type === 'syll' ? DOM.syllPreview : DOM.testPreview;
+            const info = type === 'syll' ? document.getElementById('syllFileInfo') : document.getElementById('testFileInfo');
+            const progressEl = type === 'syll' ? document.getElementById('syllProgress') : document.getElementById('testProgress');
+            
+            preview.classList.remove('hidden');
+            info.textContent = `${file.name} — ${Math.round(file.size / 1024)} KB`;
+            progressEl.style.width = '0%';
+            preview._file = file; // Attach file object to preview element
+        }
 
-    // Test papers upload logic
-    const testInput = document.getElementById('testInput');
-    document.getElementById('browseTest').addEventListener('click', ()=> testInput.click());
-    document.getElementById('testDrop').addEventListener('click', ()=> testInput.click());
-    testInput.addEventListener('change', (e)=> handleFileSelect(e.target.files[0], 'test'));
-    document.getElementById('testUpload').addEventListener('click', ()=>{
-      if(state.syllabi.length===0){ alert('Please upload syllabus first'); return; }
-      const preview = document.getElementById('testPreview'); const f = preview._file; if(!f) return alert('No file selected');
-      const prog = document.getElementById('testProgress'); let p=0; const iv=setInterval(()=>{ p+=15; prog.style.width = p+'%'; if(p>=100){ clearInterval(iv); onTestUploaded(f); } }, 120);
-    });
-    document.getElementById('testCancel').addEventListener('click', ()=>{ document.getElementById('testPreview').classList.add('hidden'); });
-    function onTestUploaded(file){ state.tests.push({name:file.name,date:new Date().toISOString()}); updateStats(); document.getElementById('testPreview').classList.add('hidden'); alert('Test paper uploaded'); }
+        /** Simulates file upload progress and completion. */
+        function simulateUpload(type) {
+            const preview = type === 'syll' ? DOM.syllPreview : DOM.testPreview;
+            const file = preview._file;
+            if (!file) { alert('No file selected'); return; }
+            if (type === 'test' && state.syllabi.length === 0) { alert('Please upload syllabus first'); return; }
 
-    // Update stats & UI
-    function updateStats(){
-      document.getElementById('statSyllabus').textContent = state.syllabi.length;
-      document.getElementById('statTests').textContent = state.tests.length;
-      document.getElementById('statPlans').textContent = state.plansGenerated;
-      document.getElementById('recentUploads').innerHTML = state.syllabi.concat(state.tests).slice(-5).map(u=>`<div class="p-2 border rounded bg-white">${u.name} <div class="text-xs text-gray-500">${new Date(u.date).toLocaleString()}</div></div>`).join('') || '<div class="text-sm text-gray-500">No uploads yet.</div>';
-      // checklist
-      document.getElementById('chkSyll').checked = state.syllabi.length>0;
-      document.getElementById('chkTest').checked = state.tests.length>0;
-      document.getElementById('generateBtn').disabled = !(state.syllabi.length>0 && state.tests.length>0);
-      document.getElementById('noSyllAlert').classList.toggle('hidden', state.syllabi.length>0);
-      // stats page
-      document.getElementById('listSyllCount').textContent = state.syllabi.length;
-      document.getElementById('listTestCount').textContent = state.tests.length;
-      document.getElementById('listPlanCount').textContent = state.plansGenerated;
-      const uploadsTable = document.getElementById('uploadsTable');
-      uploadsTable.innerHTML = state.syllabi.concat(state.tests).map((u,i)=>`<div class="flex justify-between p-2 border-b"><div>${u.name}</div><div class="text-xs text-gray-500">${new Date(u.date).toLocaleString()}</div></div>`).join('') || 'No uploads yet.';
-    }
+            const progressEl = type === 'syll' ? document.getElementById('syllProgress') : document.getElementById('testProgress');
+            progressEl.setAttribute('aria-valuenow', 0);
 
-    // Generate lesson plan (mock AI)
-    document.getElementById('generateBtn').addEventListener('click', ()=>{
-      // show loading state
-      const btn = document.getElementById('generateBtn'); btn.disabled=true; btn.textContent='Generating…';
-      setTimeout(()=>{
-        const overview = `AI suggests a 12-week plan focusing on core topics derived from ${state.syllabi[0].name}. Weekly structure: 2 lectures, 1 practice session, 1 assessment. Resources: recommended readings and sample tests.`;
-        document.getElementById('planOverview').textContent = overview;
-        document.getElementById('generateResult').classList.remove('hidden');
-        state.plansGenerated++;
-        updateStats();
-        btn.disabled=false; btn.textContent='Generate Lesson Plan';
-        // prepare editable content
-        document.getElementById('planEditor').textContent = `Lesson Plan (editable)\n\n${overview}\n\nWeek 1: Topic A - Objectives, Activities, Assessment\nWeek 2: Topic B - ...`;
-      }, 1000);
-    });
+            let p = 0;
+            const iv = setInterval(() => {
+                p += 10;
+                progressEl.style.width = p + '%';
+                progressEl.setAttribute('aria-valuenow', p);
+                if (p >= 100) {
+                    clearInterval(iv);
+                    preview.classList.add('hidden');
+                    const uploadData = { name: file.name, date: new Date().toISOString(), type: type };
+                    if (type === 'syll') {
+                        state.syllabi.push(uploadData);
+                        alert('Syllabus uploaded successfully!');
+                    } else {
+                        state.tests.push(uploadData);
+                        alert('Test paper uploaded successfully!');
+                    }
+                    updateStats();
+                }
+            }, 100); // Faster upload for hackathon demo
+        }
+        
+        /** Handles drag-and-drop events */
+        function setupDragAndDrop(dropEl, inputEl, type) {
+            dropEl.addEventListener('dragover', (e) => { e.preventDefault(); dropEl.classList.add('drag-over'); });
+            dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag-over'));
+            dropEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropEl.classList.remove('drag-over');
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect(e.dataTransfer.files[0], type);
+                }
+            });
+            // Click handler to trigger file input
+            dropEl.addEventListener('click', () => inputEl.click());
+        }
 
-    // Modal controls
-    document.getElementById('editPlan').addEventListener('click', ()=>{ document.getElementById('modal').classList.remove('hidden'); document.getElementById('modal').classList.add('flex'); });
-    document.getElementById('closeModal').addEventListener('click', ()=>{ document.getElementById('modal').classList.add('hidden'); document.getElementById('modal').classList.remove('flex'); });
-    document.getElementById('saveChanges').addEventListener('click', ()=>{ const txt = document.getElementById('planEditor').textContent; document.getElementById('planOverview').textContent = txt.slice(0,400)+'...'; alert('Changes saved'); document.getElementById('modal').classList.add('hidden'); document.getElementById('modal').classList.remove('flex'); });
-    document.getElementById('finalizeFromModal').addEventListener('click', ()=>{ alert('Plan accepted as final'); document.getElementById('modal').classList.add('hidden'); document.getElementById('modal').classList.remove('flex'); });
-    document.getElementById('acceptPlan').addEventListener('click', ()=>{ alert('Plan accepted / finalized'); });
-    document.getElementById('downloadPlan').addEventListener('click', ()=>{ alert('Download simulated (implement backend export to enable).'); });
+        // -----------------------------------------------------
+        // 6. LESSON PLAN GENERATION (MOCK)
+        // -----------------------------------------------------
+        
+        /** Simulates the Gemini API call and returns a plan. */
+        function generateLessonPlan() {
+            // Mock AI response structure
+            const syllName = state.syllabi[0] ? state.syllabi[0].name : 'Primary Syllabus';
+            const testCount = state.tests.length;
+            const planText = 
+`AI suggests a **12-week adaptive plan** for the course based on ${syllName} and analysis of ${testCount} student assessments.
 
-    // Profile
-    document.getElementById('saveProfile').addEventListener('click', ()=>{ state.name = document.getElementById('profName').value; alert('Profile saved'); document.getElementById('userName').textContent = state.name; });
+**🎯 Key Intervention Areas Identified:**
+1. Fractions & Decimal Conversion (High Error Rate in Test 1)
+2. Algebraic Thinking Introduction (Low Performance in Test 2)
 
-    // small startup
-    updateStats();
+**📚 Proposed Weekly Structure:**
+* **Weeks 1-3 (Remediation):** Deep dive into Fractions/Decimals using interactive tools.
+* **Weeks 4-6 (Consolidation):** Reinforce core concepts with project-based learning.
+* **Weeks 7-9 (Advanced Topics):** Introduction to Algebra, paced based on class progress.
+* **Weeks 10-12 (Review & Mastery):** Comprehensive review and personalized homework sets.
 
-  </script>
+**➡️ Next Step:** Click 'Accept' to save this as the current class plan or 'Review & Edit' to refine week-by-week activities.`;
+            
+            return planText;
+        }
+
+        // -----------------------------------------------------
+        // 7. EVENT BINDINGS
+        // -----------------------------------------------------
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupMobileNav();
+            updateStats();
+            showPage('auth'); // Start on the Authentication page
+
+            // --- Nav Binds ---
+            DOM.navBtns.forEach(b => b.addEventListener('click', () => showPage(b.dataset.nav)));
+            DOM.mobileNav.addEventListener('change', (e) => showPage(e.target.value));
+
+            // --- Auth Binds ---
+            DOM.loginBtn.addEventListener('click', () => { 
+                state.loggedIn = true; 
+                state.name = DOM.loginEmail.value.split('@')[0] || 'Teacher'; 
+                afterLogin(); 
+            });
+            DOM.guestBtn.addEventListener('click', () => { 
+                state.loggedIn = true; 
+                afterLogin(); 
+            });
+            document.getElementById('logoutBtn').addEventListener('click', () => { if(confirm('Are you sure you want to log out?')) { state.loggedIn = false; showPage('auth'); } });
+            document.getElementById('toRegister').addEventListener('click', () => { DOM.loginForm.classList.add('hidden'); DOM.registerForm.classList.remove('hidden'); });
+            document.getElementById('toLogin').addEventListener('click', () => { DOM.loginForm.classList.remove('hidden'); DOM.registerForm.classList.add('hidden'); });
+            document.getElementById('registerBtn').addEventListener('click', () => { 
+                // Minimal check
+                if (document.getElementById('regPass').value !== document.getElementById('regPass2').value || !document.getElementById('termsChk').checked) {
+                    alert('Passwords must match and terms must be accepted.'); return;
+                }
+                state.loggedIn = true; state.name = document.getElementById('regName').value || 'Teacher'; afterLogin(); 
+            });
+
+            // --- Quick Action Binds ---
+            document.getElementById('uploadQuick').addEventListener('click', () => showPage('upload-syllabus'));
+            document.getElementById('genQuick').addEventListener('click', () => showPage('generate'));
+
+            // --- Upload Binds (Syllabus) ---
+            setupDragAndDrop(DOM.syllabusDrop, DOM.syllabusInput, 'syll');
+            DOM.syllabusInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'syll'));
+            document.getElementById('syllUpload').addEventListener('click', () => simulateUpload('syll'));
+            document.getElementById('syllCancel').addEventListener('click', () => DOM.syllPreview.classList.add('hidden'));
+            
+            // --- Upload Binds (Tests) ---
+            setupDragAndDrop(DOM.testDrop, DOM.testInput, 'test');
+            DOM.testInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'test'));
+            document.getElementById('testUpload').addEventListener('click', () => simulateUpload('test'));
+            document.getElementById('testCancel').addEventListener('click', () => DOM.testPreview.classList.add('hidden'));
+
+            // --- Generate Binds ---
+            DOM.generateBtn.addEventListener('click', () => {
+                const btn = DOM.generateBtn;
+                btn.disabled = true;
+                btn.textContent = 'Analyzing with Gemini...';
+                
+                // Simulate AI processing time
+                setTimeout(() => {
+                    const plan = generateLessonPlan();
+                    state.currentPlanOverview = plan;
+                    
+                    DOM.planOverview.textContent = plan;
+                    DOM.generateResult.classList.remove('hidden');
+                    state.plansGenerated++;
+                    updateStats();
+
+                    btn.disabled = false;
+                    btn.textContent = 'Generate Lesson Plan';
+                }, 2000); // 2 seconds to simulate network/AI latency
+            });
+            
+            // --- Plan Actions Binds ---
+            document.getElementById('editPlan').addEventListener('click', () => { 
+                DOM.planEditor.textContent = state.currentPlanOverview;
+                DOM.modal.classList.add('flex');
+                DOM.modal.classList.remove('hidden');
+            });
+            document.getElementById('closeModal').addEventListener('click', () => { 
+                DOM.modal.classList.add('hidden');
+                DOM.modal.classList.remove('flex');
+            });
+            document.getElementById('saveChanges').addEventListener('click', () => { 
+                const newPlan = DOM.planEditor.textContent;
+                state.currentPlanOverview = newPlan;
+                DOM.planOverview.textContent = newPlan.slice(0, 400) + (newPlan.length > 400 ? '...' : ''); 
+                alert('Changes saved to overview.');
+                document.getElementById('closeModal').click();
+            });
+            document.getElementById('finalizeFromModal').addEventListener('click', () => { alert('Plan accepted as final and logged.'); document.getElementById('closeModal').click(); });
+            document.getElementById('acceptPlan').addEventListener('click', () => { alert('Plan accepted / finalized and logged.'); });
+            document.getElementById('downloadPlan').addEventListener('click', () => { alert('Download simulated (PDF export logic would go here).'); });
+
+            // --- Profile Binds ---
+            document.getElementById('saveProfile').addEventListener('click', () => { 
+                state.name = document.getElementById('profName').value; 
+                state.email = document.getElementById('profEmail').value; 
+                alert('Profile saved. Navigating back to home.'); 
+                updateStats();
+                showPage('home');
+            });
+
+            // Initial Profile fields setup
+            document.getElementById('profName').value = state.name;
+            document.getElementById('profEmail').value = state.email;
+        });
+    </script>
 </body>
 </html>
