@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_login import LoginManager 
 from fastapi_login.exceptions import InvalidCredentialsException
-from fastapi import Depends, Request, UploadFile, Response, Form, status
+from fastapi import Depends, Request, UploadFile, Response, Form, status, HTTPException
+from pydantic import BaseModel
 import json, os
 import shutil
 from google import genai
@@ -135,7 +137,7 @@ def login_handling(data: OAuth2PasswordRequestForm = Depends()):
    access_token = manager.create_access_token(
        data={"sub": username}
    )
-   resp = RedirectResponse(url="/private", status_code=status.HTTP_302_FOUND)
+   resp = RedirectResponse(url="/private")
    manager.set_cookie(resp, access_token)
    return resp
 
@@ -145,10 +147,20 @@ def getPrivate(_=Depends(manager)):
    return "You are an authentciated user"
 
 
-@app.get("/gemini")
-def getGemini(_=Depends(manager)):
-   response = client.models.generate_content(model='gemini-2.0-flash', contents='What could we learn on a Monday?')
-   return "What answer do you expect?"
+class RequestData(BaseModel):
+    urls: list[str]
+    text: str
+    question: str
+
+@app.post("/generate-content/")
+async def generate_content(request_data: RequestData):
+    model_inputs = {
+        "urls": request_data.urls,
+        "text": request_data.text,
+        "question": request_data.question
+    }
+    response = client.models.generate_content(**model_inputs)
+    return {response.text}
 
 
 @app.get("/public")
@@ -163,7 +175,7 @@ async def login():
    
 @app.get('/logout', response_class=HTMLResponse)
 def logout(request: Request, user=Depends(manager)):
-    resp = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    resp = RedirectResponse(url="/login")
     manager.set_cookie(resp, "")
     return resp
 
@@ -210,7 +222,7 @@ async def syllabus_uploader(file: UploadFile):
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     url = storage_service.StorageService.upload_file(save_path)
-    upload_data = upload_record.UploadRecord(str(file.filename), "TestPaper", url)
+    upload_data = upload_record.UploadRecord(str(file.filename), "SyllabusPaper", url)
     upload_service.UploadService.add_upload(teacher_id, upload_data)
     syllabus_upload_data = syllabus.Syllabus(str(file.filename), url) 
     syllabus_service.SyllabusService.add_syllabus(teacher_id, syllabus_upload_data)
@@ -222,3 +234,11 @@ async def list_syllabus_uploads():
     uploads = syllabus_service.SyllabusService.list_syllabi(teacher_id)
     return {json.dumps(uploads)}
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
