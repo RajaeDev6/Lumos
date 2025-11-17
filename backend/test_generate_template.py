@@ -8,7 +8,7 @@ from config.settings import settings
 from utils.app_logger import logger
 
 # --- AI CONFIG ---
-client = genai.Client(api_key=setttings.GEMINI_API_KEY)
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 def extract_questions_with_topics(pdf_path):
     with open(pdf_path, "rb") as f:
