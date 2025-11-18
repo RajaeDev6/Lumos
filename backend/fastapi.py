@@ -250,7 +250,7 @@ def download_file(url: str, filename: str):
 
 @app.post("/process-exam/")
 async def process_exam(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
-    exam_data = AI_engine.process_exam(download_file(questionpdf_url, "One"), download_file(teacher_pdf, "Two"), download_file(student_pdf, "Three"))
+    exam_data = AI_engine.process_exam(download_file(questionpdf_url, "One.pdf"), download_file(teacher_pdf, "Two.pdf"), download_file(student_pdf, "Three.pdf"))
     return exam_data
 
 
@@ -262,8 +262,8 @@ async def generate_plan(topic: str):
 
 @app.post("/process_exam_full/")
 async def process_exam_full(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
-    full_data = AI_engine.process_exam_full(download_file(questionpdf_url, "One"), download_file(teacher_pdf, "Two"), download_file(student_pdf, "Three"))
-    return full_data
+    full_data = AI_engine.process_exam_full(download_file(questionpdf_url, "One.pdf"), download_file(teacher_pdf, "Two.pdf"), download_file(student_pdf, "Three.pdf"))
+    return json.dumps(full_data)
 
 
 app.add_middleware(
