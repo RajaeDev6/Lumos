@@ -5,53 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LessonPlanApp — Adaptive Curriculum Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Base styles and utility overrides */
-        .page-content {
-            /* Consistent spacing for page content */
-            padding: 1.5rem; 
-        }
-        .hidden-page {
-            display: none;
-        }
-        .active-page {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Style for the active navigation button */
-        .nav-btn.active {
-            font-weight: 600; /* semi-bold */
-            color: #4f46e5; /* indigo-600 */
-            background-color: #f3f4f6; /* gray-100 */
-        }
-        /* Custom modal overlay style */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(3px);
-            z-index: 50;
-        }
-        /* Custom drag-over style */
-        .dropzone.drag-over {
-            border-color: #4f46e5;
-            background-color: #eef2ff;
-        }
-    </style>
+    <!-- Custom presentation stylesheet (keeps Tailwind for utilities) -->
+    <link rel="stylesheet" href="src/css/style.css">
+    <meta name="theme-color" content="#4f46e5">
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen">
     <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6">
 
-        <header class="sticky top-0 bg-white shadow-md rounded-lg p-4 mb-6 z-40">
+        <header class="sticky top-0 bg-white/80 backdrop-blur-md shadow-md rounded-lg p-4 mb-6 z-40">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2 sm:gap-4">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-teal-400 flex items-center justify-center text-white font-extrabold text-xl">LP</div>
-                    <h1 class="text-lg sm:text-xl font-semibold text-gray-900">LessonPlanApp</h1>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-extrabold text-xl shadow-glow">L</div>
+                    <h1 class="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">Lumos <span class="text-sm text-indigo-500 font-medium ml-2">AI Curriculum</span></h1>
                 </div>
 
-                <nav id="desktopNav" class="hidden lg:flex gap-1 items-center">
+                <nav id="desktopNav" class="hidden lg:flex gap-1 items-center" role="navigation" aria-label="Primary Navigation">
                     <button data-nav="home" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Home</button>
                     <button data-nav="upload-syllabus" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Upload Syllabus</button>
                     <button data-nav="upload-test" class="nav-btn px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">Upload Test Papers</button>
@@ -69,6 +37,41 @@
                 </div>
             </div>
         </header>
+
+        <!-- AI Progress Timeline & File Preview (UI-only enhancements) -->
+        <div class="max-w-7xl mx-auto p-4 sm:p-6">
+            <div id="aiTimeline" class="hidden md:flex items-center gap-4 bg-white/60 rounded-lg shadow-sm p-3 mb-6">
+                <div class="flex items-center gap-3 w-full">
+                    <div class="flex-1 text-sm text-gray-600">AI Workflow:</div>
+                    <div class="flex gap-2 items-center flex-1">
+                        <div class="step flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">1</div>
+                            <div class="text-xs">Syllabus</div>
+                        </div>
+                        <div class="w-6 border-t border-dashed border-gray-200 mx-2"></div>
+                        <div class="step flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">2</div>
+                            <div class="text-xs">Tests</div>
+                        </div>
+                        <div class="w-6 border-t border-dashed border-gray-200 mx-2"></div>
+                        <div class="step flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">3</div>
+                            <div class="text-xs">Analysis</div>
+                        </div>
+                        <div class="w-6 border-t border-dashed border-gray-200 mx-2"></div>
+                        <div class="step flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">4</div>
+                            <div class="text-xs">Plan</div>
+                        </div>
+                    </div>
+                    <div id="aiStatus" class="text-sm text-gray-500">Idle</div>
+                </div>
+            </div>
+
+            <div id="filePreviewPanel" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- JS will populate previews here -->
+            </div>
+        </div>
         
         <main id="contentArea">
             <section id="auth" class="active-page bg-white rounded-xl shadow-xl page-content">
@@ -131,7 +134,7 @@
                 </div>
             </section>
 
-            <section id="home" class="hidden-page mt-6">
+            <section id="home" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
@@ -144,23 +147,38 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                        <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg shadow-sm">
-                            <div class="text-sm text-indigo-700 font-medium">Syllabi uploaded</div>
-                            <div id="statSyllabus" class="text-3xl font-extrabold text-indigo-900 mt-1">0</div>
-                        </div>
-                        <div class="p-4 bg-teal-50 border border-teal-200 rounded-lg shadow-sm">
-                            <div class="text-sm text-teal-700 font-medium">Lesson plans generated</div>
-                            <div id="statPlans" class="text-3xl font-extrabold text-teal-900 mt-1">0</div>
-                        </div>
-                        <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg shadow-sm">
-                            <div class="text-sm text-gray-600 font-medium">Test papers uploaded</div>
-                            <div id="statTests" class="text-3xl font-extrabold text-gray-800 mt-1">0</div>
-                        </div>
-                        <div class="p-4 bg-gray-100 border border-gray-200 rounded-lg shadow-sm">
-                            <div class="text-sm text-gray-600 font-medium">Recent activity</div>
-                            <div id="statActivity" class="text-2xl font-bold text-gray-800 mt-1">—</div>
-                        </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                <div class="metric-card flex items-start gap-4">
+                                    <div class="metric-icon bg-indigo-50 text-indigo-600"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2h-3l-3 3-3-3H4a2 2 0 01-2-2V5z"/></svg></div>
+                                    <div class="flex-1">
+                                        <div class="metric-label">Syllabi uploaded</div>
+                                        <div id="statSyllabus" class="metric-value count-anim">0</div>
+                                        <div class="mt-3 progress-track"><div id="progSyll" class="progress-fill" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                                <div class="metric-card flex items-start gap-4">
+                                    <div class="metric-icon bg-teal-50 text-teal-600"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 12h6v6H9z"/></svg></div>
+                                    <div class="flex-1">
+                                        <div class="metric-label">Lesson plans generated</div>
+                                        <div id="statPlans" class="metric-value count-anim">0</div>
+                                        <div class="mt-3 progress-track"><div id="progPlans" class="progress-fill" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                                <div class="metric-card flex items-start gap-4">
+                                    <div class="metric-icon bg-gray-100 text-gray-700"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3h12v4H4z"/></svg></div>
+                                    <div class="flex-1">
+                                        <div class="metric-label">Test papers uploaded</div>
+                                        <div id="statTests" class="metric-value count-anim">0</div>
+                                        <div class="mt-3 progress-track"><div id="progTests" class="progress-fill" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                                <div class="metric-card flex items-start gap-4">
+                                    <div class="metric-icon bg-white text-gray-700"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 10h14"/></svg></div>
+                                    <div class="flex-1">
+                                        <div class="metric-label">Recent activity</div>
+                                        <div id="statActivity" class="metric-value">—</div>
+                                    </div>
+                                </div>
                     </div>
 
                     <h3 class="mt-8 font-bold text-lg border-b pb-2">Recent Uploads</h3>
@@ -170,17 +188,18 @@
                 </div>
             </section>
 
-            <section id="upload-syllabus" class="hidden-page mt-6">
+            <section id="upload-syllabus" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <div class="flex items-center justify-between mb-6 border-b pb-3">
                         <div class="text-sm text-gray-500">Upload Syllabus</div>
                         <div class="text-xs sm:text-sm text-gray-500 font-medium">Accepted: PDF, DOCX, XLSX</div>
                     </div>
                     
-                    <div id="syllabusDrop" role="button" aria-controls="syllPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div id="syllabusDrop" role="button" aria-controls="syllPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-describedby="syllDesc">
                         <p class="text-lg font-medium mb-4">Drag your syllabus here or click to upload</p>
                         <input id="syllabusInput" type="file" accept=".pdf,.docx,.xlsx" class="sr-only" />
                         <button id="browseSyllabus" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Browse files</button>
+                    <p id="syllDesc" class="text-xs text-gray-500 mt-3">Maximum file size 20MB. Supported formats: PDF, DOCX, XLSX.</p>
                     </div>
 
                     <div id="syllPreview" class="mt-6 hidden p-4 border border-indigo-300 rounded-lg bg-indigo-50">
@@ -198,7 +217,7 @@
                 </div>
             </section>
 
-            <section id="upload-test" class="hidden-page mt-6">
+            <section id="upload-test" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <div class="text-sm text-gray-500 mb-6 border-b pb-3"> Upload Test Papers</div>
 
@@ -206,10 +225,11 @@
                         <span class="font-semibold">Attention:</span> Please upload syllabus first to contextualize test data.
                     </div>
 
-                    <div id="testDrop" role="button" aria-controls="testPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div id="testDrop" role="button" aria-controls="testPreview" tabindex="0" class="dropzone border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-describedby="testDesc">
                         <p class="text-lg font-medium mb-4">Drag your test paper here or click to upload</p>
                         <input id="testInput" type="file" accept=".pdf,.docx,.xlsx" class="sr-only" />
                         <button id="browseTest" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Browse files</button>
+                        <p id="testDesc" class="text-xs text-gray-500 mt-3">Tests help the AI detect weak areas — recommended.</p>
                     </div>
                     
                     <div id="testPreview" class="mt-6 hidden p-4 border border-indigo-300 rounded-lg bg-indigo-50">
@@ -227,7 +247,7 @@
                 </div>
             </section>
 
-            <section id="generate" class="hidden-page mt-6">
+            <section id="generate" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-3">Generate Adaptive Lesson Plan</h3>
                     
@@ -265,7 +285,7 @@
                 </div>
             </section>
 
-            <section id="stats" class="hidden-page mt-6">
+            <section id="stats" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-3">Statistics & Usage History</h3>
                     <div class="mt-4 grid md:grid-cols-2 gap-6">
@@ -278,16 +298,42 @@
                             </ul>
                         </div>
                         <div class="p-5 border border-gray-200 rounded-lg bg-white">
-                            <h4 class="font-bold text-lg text-gray-800">Previous Uploads & Plans</h4>
-                            <div id="uploadsTable" class="mt-3 text-sm text-gray-700 space-y-1">
-                                <div class="text-sm text-gray-500">No uploads yet.</div>
-                            </div>
+                                <h4 class="font-bold text-lg text-gray-800">Previous Uploads & Plans</h4>
+                                <div id="uploadsTable" class="mt-3 text-sm text-gray-700 space-y-1">
+                                    <div class="text-sm text-gray-500">No uploads yet.</div>
+                                </div>
+                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="metric-card">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-700">Syllabus Insights</div>
+                                                <div class="text-xs text-gray-500">Overview of uploaded syllabus content</div>
+                                            </div>
+                                            <div class="text-sm text-gray-500">Summary</div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <canvas id="chartSyllabus" height="100" class="w-full"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-700">Test Performance</div>
+                                                <div class="text-xs text-gray-500">Recent test analysis</div>
+                                            </div>
+                                            <div class="text-sm text-gray-500">Trend</div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <canvas id="chartTests" height="100" class="w-full"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section id="profile" class="hidden-page mt-6">
+            <section id="profile" class="hidden-page mt-4">
                 <div class="bg-white rounded-xl shadow-lg page-content">
                     <h3 class="text-xl font-semibold mb-4 border-b pb-3">Profile & Settings</h3>
                     <div class="mt-4 grid md:grid-cols-2 gap-8">
@@ -362,7 +408,7 @@
         </div>
 
     </div>
-
+    <!-- Existing application script remains unchanged above. Enhancements script and Chart.js loaded below. -->
     <script type="module">
         // -----------------------------------------------------
         // 1. STATE MANAGEMENT
@@ -384,6 +430,7 @@
             pages: document.querySelectorAll('section[id]'),
             navBtns: document.querySelectorAll('.nav-btn'),
             mobileNav: document.getElementById('mobileNav'),
+            sidebar: document.getElementById('sidebar'),
             // Auth
             auth: document.getElementById('auth'),
             loginForm: document.getElementById('loginForm'),
@@ -437,7 +484,14 @@
 
             // Update desktop nav button active state
             DOM.navBtns.forEach(b => {
-                b.classList.toggle('active', b.dataset.nav === pageId);
+                const isActive = (b.dataset.nav === pageId);
+                b.classList.toggle('active', isActive);
+                // Accessibility: set aria-current for the active nav item
+                if (isActive) {
+                    b.setAttribute('aria-current', 'page');
+                } else {
+                    b.removeAttribute('aria-current');
+                }
             });
             
             // Update mobile select (if applicable)
@@ -505,6 +559,9 @@
         function afterLogin() {
             DOM.auth.classList.add('hidden-page');
             document.getElementById('contentArea').classList.remove('hidden'); // Hide content area before login if desired
+            if (DOM.sidebar) {
+                DOM.sidebar.classList.add('lg:flex');
+            }
             updateStats(); // Initial UI render
             showPage('home'); // Go to Dashboard
         }
@@ -705,5 +762,7 @@
             document.getElementById('profEmail').value = state.email;
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="src/js/ui-enhancements.js"></script>
 </body>
 </html>

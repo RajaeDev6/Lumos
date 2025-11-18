@@ -1,0 +1,123 @@
+/* Frontend presentation overrides and light utility styles
+   - Tailwind handles most utilities; these rules add polish, animations,
+     and accessibility-friendly defaults without changing layout IDs.
+*/
+
+:root{
+  --accent: #4f46e5; /* indigo-600 */
+  --muted: #6b7280; /* gray-500 */
+}
+
+/* Page content spacing used across sections */
+.page-content{
+  padding: 1.25rem; /* 20px */
+}
+
+/* Page visibility helpers */
+.hidden-page{ display: none !important; }
+.active-page{ display: block !important; animation: lp-fade-in .28s ease-out both; }
+
+@keyframes lp-fade-in{
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Nav active state — keep class name 'nav-btn' intact for JS hooks */
+.nav-btn.active,
+.nav-btn[aria-current="true"]{
+  font-weight: 600;
+  color: var(--accent);
+  background-color: #eef2ff; /* indigo-50 */
+  box-shadow: 0 1px 0 rgba(79,70,229,0.06) inset;
+}
+
+/* Sidebar + logo glow */
+.shadow-glow{ box-shadow: 0 8px 32px rgba(99,102,241,0.14); }
+#sidebar button.nav-btn{ text-align:left; }
+#sidebar .nav-btn[aria-current="page"]{ background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(99,102,241,0.02)); box-shadow: 0 6px 20px rgba(99,102,241,0.08); }
+
+/* Card & metric styles */
+.metric-card{ padding: 1rem; border-radius: .75rem; background: linear-gradient(180deg, #fff, #fbfdff); border: 1px solid rgba(99,102,241,0.06); box-shadow: 0 8px 24px rgba(15,23,42,0.04); }
+.metric-icon{ width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; }
+.metric-value{ font-size:1.5rem; font-weight:700; color: #0f172a; }
+.metric-label{ font-size:.85rem; color:var(--muted); }
+
+/* animated counter */
+.count-anim{ transition: all .6s cubic-bezier(.2,.9,.2,1); }
+
+/* progress bar */
+.progress-track{ background:#eef2ff; border-radius:999px; height:8px; overflow:hidden; }
+.progress-fill{ height:8px; background:linear-gradient(90deg,#6366f1,#06b6d4); border-radius:999px; width:0%; transition: width .7s ease; }
+
+/* empty state */
+.empty-state{ text-align:center; padding:2rem; border-radius:0.75rem; background:linear-gradient(180deg,#fbfdff,#ffffff); border:1px dashed rgba(99,102,241,0.06); color:var(--muted); }
+
+
+/* Dropzone enhancements */
+.dropzone{
+  transition: box-shadow .18s ease, background-color .12s ease, border-color .12s ease;
+}
+.dropzone.drag-over{
+  border-color: var(--accent);
+  background-color: #eef2ff; /* soft indigo */
+  box-shadow: 0 8px 24px rgba(79,70,229,0.06);
+}
+
+/* Modal overlay styling (uses .modal-overlay class on element) */
+.modal-overlay{
+  background-color: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Subtle card lift for motion-capable devices */
+.page-content > .shadow-lg,
+.shadow-sm:hover{ transform: translateY(-4px); }
+
+/* Accessibility: focus rings that match theme */
+:focus{ outline: none; }
+.focus-ring:focus{
+  box-shadow: 0 0 0 4px rgba(79,70,229,0.12);
+  border-color: var(--accent);
+}
+
+/* Small utility for truncated previews */
+.truncate-3{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .active-page{ animation: none; }
+  *{ transition: none !important; }
+}
+
+/* Minor typographic helpers */
+.muted{ color: var(--muted); }
+
+/* Improved table / uploads list visuals */
+#uploadsTable .flex{ padding-left: .6rem; padding-right: .6rem; }
+
+/* Make large modal content slightly more prominent */
+.modal-content{ max-height: 80vh; overflow:auto; }
+
+/* Keep print-friendly defaults */
+@media print{
+  body{ background: #fff; color: #000; }
+}
+
+/* End of custom presentation styles */
+
+/* Skeleton loaders */
+.skeleton{ background: linear-gradient(90deg,#f3f4f6 25%, #e6eefc 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: .375rem; }
+@keyframes shimmer{ 0%{ background-position: 200% 0 } 100%{ background-position: -200% 0 } }
+
+/* Chatbot floating button and panel */
+.assistant-btn{ position: fixed; right: 20px; bottom: 20px; z-index: 60; }
+.assistant-panel{ position: fixed; right: 20px; bottom: 84px; width: 320px; max-width: calc(100% - 40px); z-index: 60; border-radius: 12px; box-shadow: 0 12px 40px rgba(2,6,23,0.2); overflow: hidden; }
+.assistant-panel .header{ background: linear-gradient(90deg,var(--accent),#06b6d4); color: white; padding: 0.75rem; display:flex; align-items:center; justify-content:space-between; }
+.assistant-panel .messages{ background: #fff; max-height: 360px; overflow:auto; padding: 0.75rem; display:flex; flex-direction:column; gap:0.5rem; }
+.assistant-panel .composer{ padding: 0.5rem; border-top: 1px solid #eee; background:#fafafa; display:flex; gap:0.5rem; }
+.assistant-bubble{ background:#eef2ff; color:#111827; padding:0.6rem 0.8rem; border-radius:10px; max-width:80%; }
+.assistant-bubble.user{ background:#e6fffa; align-self:flex-end; }
+
+/* File preview cards */
+.file-preview{ background: white; border: 1px solid #e6eefc; padding: 0.75rem; border-radius: 0.5rem; box-shadow: 0 6px 18px rgba(79,70,229,0.04); }
+
