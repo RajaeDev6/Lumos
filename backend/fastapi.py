@@ -251,7 +251,7 @@ def download_file(url: str, filename: str):
 @app.post("/process-exam/")
 async def process_exam(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
     exam_data = AI_engine.process_exam(download_file(questionpdf_url, "One.pdf"), download_file(teacher_pdf, "Two.pdf"), download_file(student_pdf, "Three.pdf"))
-    return exam_data
+    return json.dumps(exam_data)
 
 
 @app.post("/generate_plan/")
