@@ -161,7 +161,7 @@ async def generate_content(request_data: RequestData):
     }
     response = client.models.generate_content(**model_inputs)
     return {response.text}
-
+ 
 @app.post("/ai/process_exam/")
 async def ai_process_exam(
     question_pdf: UploadFile,

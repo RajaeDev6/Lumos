@@ -1,12 +1,21 @@
+import sys, os
+
+# FIX: ensure backend/ is in module path BEFORE importing anything
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, BASE_DIR)
+
+print("AI_engine PYTHONPATH:", BASE_DIR)
+
 import base64
 import os
 import json
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-import csv
-import io
 from utils.app_logger import logger
+
+
+
 
 load_dotenv()
 
