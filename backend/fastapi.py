@@ -6,12 +6,11 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 from fastapi import Depends, Request, UploadFile, Response, Form, status, HTTPException
 from pydantic import BaseModel
-import json, os
-import shutil
+import json, os, shutil, httpx
+from pathlib import Path
 from google import genai
 from models import teacher, lesson_plan, performance_overview, recommendation, weak_area, upload_record, test_paper, syllabus
-from services import teacher_service, lesson_plan_service, performance_service, recommendation_service, weak_area_service, storage_service, upload_service, test_paper_service, syllabus_service
-from services.AI_engine import process_exam_full
+from services import teacher_service, lesson_plan_service, performance_service, recommendation_service, weak_area_service, storage_service, upload_service, test_paper_service, syllabus_service, AI_engine
 
 app = FastAPI()
 
@@ -161,34 +160,6 @@ async def generate_content(request_data: RequestData):
     }
     response = client.models.generate_content(**model_inputs)
     return {response.text}
- 
-@app.post("/ai/process_exam/")
-async def ai_process_exam(
-    question_pdf: UploadFile,
-    teacher_answer: UploadFile,
-    student_answer: UploadFile
-):
-    # Save uploaded files temporarily
-    q_path = f"./temp/{question_pdf.filename}"
-    t_path = f"./temp/{teacher_answer.filename}"
-    s_path = f"./temp/{student_answer.filename}"
-
-    os.makedirs("./temp", exist_ok=True)
-
-    with open(q_path, "wb") as f:
-        f.write(await question_pdf.read())
-
-    with open(t_path, "wb") as f:
-        f.write(await teacher_answer.read())
-
-    with open(s_path, "wb") as f:
-        f.write(await student_answer.read())
-
-    # Run full AI processing
-    result = process_exam_full(q_path, t_path, s_path)
-
-    return result
-
 
 
 @app.get("/public")
@@ -261,6 +232,38 @@ async def syllabus_uploader(file: UploadFile):
 async def list_syllabus_uploads():
     uploads = syllabus_service.SyllabusService.list_syllabi(teacher_id)
     return {json.dumps(uploads)}
+
+
+def download_file(url: str, filename: str): 
+    download_dir = Path.home() / "downloads"
+    file_path = download_dir / filename
+    try:
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()  
+            with open(file_path, "wb") as file:
+                file.write(response.content)
+        return file_path
+    except Exception as e:
+        return f"Error downloading PDF: {str(e)}"
+
+
+@app.post("/process-exam/")
+async def process_exam(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
+    exam_data = AI_engine.process_exam(download_file(questionpdf_url, "One"), download_file(teacher_pdf, "Two"), download_file(student_pdf, "Three"))
+    return exam_data
+
+
+@app.post("/generate_plan/")
+async def generate_plan(topic: str):
+    plan = AI_engine.generate_learning_plan(topic)
+    return plan
+
+
+@app.post("/process_exam_full/")
+async def process_exam_full(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
+    full_data = AI_engine.process_exam_full(download_file(questionpdf_url, "One"), download_file(teacher_pdf, "Two"), download_file(student_pdf, "Three"))
+    return full_data
 
 
 app.add_middleware(
