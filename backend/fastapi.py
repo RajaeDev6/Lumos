@@ -11,7 +11,7 @@ import shutil
 from google import genai
 from models import teacher, lesson_plan, performance_overview, recommendation, weak_area, upload_record, test_paper, syllabus
 from services import teacher_service, lesson_plan_service, performance_service, recommendation_service, weak_area_service, storage_service, upload_service, test_paper_service, syllabus_service
-
+from services.AI_engine import process_exam_full
 
 app = FastAPI()
 
@@ -161,6 +161,34 @@ async def generate_content(request_data: RequestData):
     }
     response = client.models.generate_content(**model_inputs)
     return {response.text}
+
+@app.post("/ai/process_exam/")
+async def ai_process_exam(
+    question_pdf: UploadFile,
+    teacher_answer: UploadFile,
+    student_answer: UploadFile
+):
+    # Save uploaded files temporarily
+    q_path = f"./temp/{question_pdf.filename}"
+    t_path = f"./temp/{teacher_answer.filename}"
+    s_path = f"./temp/{student_answer.filename}"
+
+    os.makedirs("./temp", exist_ok=True)
+
+    with open(q_path, "wb") as f:
+        f.write(await question_pdf.read())
+
+    with open(t_path, "wb") as f:
+        f.write(await teacher_answer.read())
+
+    with open(s_path, "wb") as f:
+        f.write(await student_answer.read())
+
+    # Run full AI processing
+    result = process_exam_full(q_path, t_path, s_path)
+
+    return result
+
 
 
 @app.get("/public")

@@ -6,11 +6,14 @@ from google import genai
 from google.genai import types
 import csv
 import io
-from config.settings import settings
 from utils.app_logger import logger
 
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 # --- AI CONFIG ---
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 # -------------------------------------------------------

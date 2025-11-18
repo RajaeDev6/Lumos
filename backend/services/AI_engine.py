@@ -1,59 +1,236 @@
+import base64
 import os
+import json
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 import csv
 import io
-import pandas as pd
+from utils.app_logger import logger
 
-# Load variables from .env
 load_dotenv()
 
-# Functions
-def generate_csv_template(topics_list):
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# --- AI CONFIG ---
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+
+# -------------------------------------------------------
+# Utility: load PDF or text file into Gemini-compatible Part
+# -------------------------------------------------------
+def load_file(path):
+    ext = path.lower()
+
+    # PDF INPUT
+    if ext.endswith(".pdf"):
+        with open(path, "rb") as f:
+            data = f.read()
+
+        return types.Part(
+            inline_data=types.Blob(
+                mime_type="application/pdf",
+                data=data  # IMPORTANT: raw bytes, NOT base64
+            )
+        )
+
+    # TEXT INPUT
+    with open(path, "r", encoding="utf-8") as f:
+        return types.Part(text=f.read())
+
+
+# -------------------------------------------------------
+# 1. Extract Questions + Topics
+# -------------------------------------------------------
+def extract_questions_with_topics(pdf_path):
+    with open(pdf_path, "rb") as f:
+        pdf_bytes = f.read()
+
+    pdf_input = types.Part(
+        inline_data=types.Blob(
+            mime_type="application/pdf",
+            data=pdf_bytes
+        )
+    )
+
+    prompt = """
+You are an expert educational examiner and curriculum specialist.
+Your task is to analyze the exam paper and extract:
+
+- Question number
+- Exact question text (NO rewriting)
+- The most appropriate academic topic/subtopic
+
+Your output MUST be ONLY valid JSON.
+
+---------------------
+RULES FOR EXTRACTION
+---------------------
+1. Preserve the exact wording of every question. Do NOT rewrite or summarize.
+2. Determine the most specific topic possible (e.g. “Algebra — Linear Equations”, 
+   “Grammar — Past Tense”, “Reading Comprehension — Inference”).
+3. Topics must be meaningful, skill-based, and curriculum-aligned.
+4. DO NOT invent topics unrelated to the question.
+5. If a question contains multiple skills, choose the PRIMARY one.
+6. If the topic is unclear, infer the closest reasonable topic.
+
+---------------------
+STRICT FORMAT:
+---------------------
+[
+  {
+    "number": <question number>,
+    "question": "<exact question text>",
+    "topic": "<topic or subtopic>"
+  }
+]
+
+Return ONLY the JSON array. No explanations.
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[types.Part(text=prompt), pdf_input],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
+    )
+
+    return json.loads(response.text)
+
+
+# -------------------------------------------------------
+# 2. Compare Teacher vs Student Answers
+# -------------------------------------------------------
+def compare_answers(questions, teacher_file, student_file):
+    teacher_part = load_file(teacher_file)
+    student_part = load_file(student_file)
+
+    prompt = f"""
+You will compare TEACHER answers with STUDENT answers.
+
+QUESTIONS:
+{json.dumps(questions, indent=2)}
+
+-------------------------
+STRICT OUTPUT FORMAT:
+-------------------------
+Return ONLY JSON:
+[
+  {{
+    "question_number": <num>,
+    "topic": "<topic>",
+    "teacher_answer": "<text>",
+    "student_answer": "<text>",
+    "correct": true/false
+  }}
+]
+
+RULES:
+- Match answers by question number
+- Mark TRUE if answers are logically equivalent
+- Mark FALSE if wrong, missing, empty, or ambiguous
+- Do NOT solve questions, only compare
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            types.Part(text=prompt),
+            types.Part(text="TEACHER ANSWERS:"), teacher_part,
+            types.Part(text="STUDENT ANSWERS:"), student_part
+        ],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
+    )
+
+    return json.loads(response.text)
+
+
+# -------------------------------------------------------
+# 3. Build Topic Performance Table
+# -------------------------------------------------------
+def compute_topic_scores(results):
+    topic_stats = {}
+
+    for item in results:
+        topic = item["topic"]
+        correct = item["correct"]
+
+        if topic not in topic_stats:
+            topic_stats[topic] = {"correct": 0, "incorrect": 0}
+
+        topic_stats[topic]["correct" if correct else "incorrect"] += 1
+
+    return topic_stats
+
+
+# -------------------------------------------------------
+# Main pipeline
+# -------------------------------------------------------
+def process_exam(question_pdf, teacher_ans, student_ans):
+    logger.info("📄 Extracting questions...")
+    questions = extract_questions_with_topics(question_pdf)
+
+    logger.info("📝 Comparing answers...")
+    results = compare_answers(questions, teacher_ans, student_ans)
+
+    logger.info("📊 Computing topic performance...")
+    stats = compute_topic_scores(results)
+
+    return {
+        "questions": questions,
+        "comparison": results,
+        "topic_stats": stats
+    }
+
+def find_strongest_and_weakest_topic(topic_stats):
+    results = []
+    for topic, data in topic_stats.items():
+        total = data["correct"] + data["incorrect"]
+        accuracy = data["correct"] / total if total else 0
+        results.append((topic, accuracy))
+
+    results.sort(key=lambda x: x[1])
+
+    return {
+        "weakest_topic": results[0][0],
+        "strongest_topic": results[-1][0]
+    }
+
+
+def generate_learning_plan(topic):
+    prompt = f"""
+    You are an expert educator. Create a detailed learning plan to improve:
+    TOPIC: {topic}
+
+    Include:
+    - Learning objectives
+    - Key concepts
+    - Required prior knowledge
+    - Step-by-step teaching strategies
+    - 2 classroom activities
+    - 1 homework activity
+    - Common student errors
+    - A short quiz (3 questions)
     """
-    Creates a CSV template string based on topics.
-    Example input: ["Reading", "Grammar"]
-    Output CSV:
-    student,Reading,Grammar
-    """
-    output = io.StringIO()
-    writer = csv.writer(output)
 
-    header = ["student"] + topics_list
-    writer.writerow(header)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[types.Part(text=prompt)]
+    )
 
-    return output.getvalue()
+    return response.text
 
-def convert_csv_to_topic_scores(csv_path):
-    # Load the CSV the teacher filled in
-    df = pd.read_csv(csv_path)
+def process_exam_full(q_pdf, t_ans, s_ans):
+    base = process_exam(q_pdf, t_ans, s_ans)
 
-    # The first column MUST be "student"
-    # The rest are topic names
-    topic_columns = df.columns[1:]  # Skip “student”
+    topics = find_strongest_and_weakest_topic(base["topic_stats"])
+    learning_plan = generate_learning_plan(topics["weakest_topic"])
 
-    topics_list = []
+    base["weakest_topic"] = topics["weakest_topic"]
+    base["strongest_topic"] = topics["strongest_topic"]
+    base["learning_plan"] = learning_plan
 
-    # Loop through each topic (Reading, Grammar, etc.)
-    for topic in topic_columns:
-        # Drop NaN and convert all scores to a list
-        scores = df[topic].dropna().tolist()
-
-        topics_list.append({
-            "topic": topic,
-            "scores": scores
-        })
-
-    return topics_list
-
-# Access the API key
-api_key = os.getenv("GEMINI_API_KEY")
-
-client = genai.Client(api_key=api_key)
-
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents="Explain how AI works in a few words"
-)
-
-print(response.text)
+    return base
