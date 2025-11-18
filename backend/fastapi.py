@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_login import LoginManager 
 from fastapi_login.exceptions import InvalidCredentialsException
-from fastapi import Depends, Request, UploadFile, Response, Form, status
-import json, os
-import shutil
+from fastapi import Depends, Request, UploadFile, Response, Form, status, HTTPException
+from pydantic import BaseModel
+import json, os, shutil, httpx
+from pathlib import Path
 from google import genai
 from models import teacher, lesson_plan, performance_overview, recommendation, weak_area, upload_record, test_paper, syllabus
-from services import teacher_service, lesson_plan_service, performance_service, recommendation_service, weak_area_service, storage_service, upload_service, test_paper_service, syllabus_service
-
+from services import teacher_service, lesson_plan_service, performance_service, recommendation_service, weak_area_service, storage_service, upload_service, test_paper_service, syllabus_service, AI_engine
 
 app = FastAPI()
 
@@ -135,7 +136,7 @@ def login_handling(data: OAuth2PasswordRequestForm = Depends()):
    access_token = manager.create_access_token(
        data={"sub": username}
    )
-   resp = RedirectResponse(url="/private", status_code=status.HTTP_302_FOUND)
+   resp = RedirectResponse(url="/private")
    manager.set_cookie(resp, access_token)
    return resp
 
@@ -145,10 +146,20 @@ def getPrivate(_=Depends(manager)):
    return "You are an authentciated user"
 
 
-@app.get("/gemini")
-def getGemini(_=Depends(manager)):
-   response = client.models.generate_content(model='gemini-2.0-flash', contents='What could we learn on a Monday?')
-   return "What answer do you expect?"
+class RequestData(BaseModel):
+    urls: list[str]
+    text: str
+    question: str
+
+@app.post("/generate-content/")
+async def generate_content(request_data: RequestData):
+    model_inputs = {
+        "urls": request_data.urls,
+        "text": request_data.text,
+        "question": request_data.question
+    }
+    response = client.models.generate_content(**model_inputs)
+    return {response.text}
 
 
 @app.get("/public")
@@ -163,7 +174,7 @@ async def login():
    
 @app.get('/logout', response_class=HTMLResponse)
 def logout(request: Request, user=Depends(manager)):
-    resp = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
+    resp = RedirectResponse(url="/login")
     manager.set_cookie(resp, "")
     return resp
 
@@ -210,7 +221,7 @@ async def syllabus_uploader(file: UploadFile):
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     url = storage_service.StorageService.upload_file(save_path)
-    upload_data = upload_record.UploadRecord(str(file.filename), "TestPaper", url)
+    upload_data = upload_record.UploadRecord(str(file.filename), "SyllabusPaper", url)
     upload_service.UploadService.add_upload(teacher_id, upload_data)
     syllabus_upload_data = syllabus.Syllabus(str(file.filename), url) 
     syllabus_service.SyllabusService.add_syllabus(teacher_id, syllabus_upload_data)
@@ -222,3 +233,43 @@ async def list_syllabus_uploads():
     uploads = syllabus_service.SyllabusService.list_syllabi(teacher_id)
     return {json.dumps(uploads)}
 
+
+def download_file(url: str, filename: str): 
+    download_dir = Path.home() / "downloads"
+    file_path = download_dir / filename
+    try:
+        with httpx.Client() as client:
+            response = client.get(url)
+            response.raise_for_status()  
+            with open(file_path, "wb") as file:
+                file.write(response.content)
+        return file_path
+    except Exception as e:
+        return f"Error downloading PDF: {str(e)}"
+
+
+@app.post("/process-exam/")
+async def process_exam(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
+    exam_data = AI_engine.process_exam(download_file(questionpdf_url, "One.pdf"), download_file(teacher_pdf, "Two.pdf"), download_file(student_pdf, "Three.pdf"))
+    return json.dumps(exam_data)
+
+
+@app.post("/generate_plan/")
+async def generate_plan(topic: str):
+    plan = AI_engine.generate_learning_plan(topic)
+    return plan
+
+
+@app.post("/process_exam_full/")
+async def process_exam_full(questionpdf_url: str, teacher_pdf: str, student_pdf: str):
+    full_data = AI_engine.process_exam_full(download_file(questionpdf_url, "One.pdf"), download_file(teacher_pdf, "Two.pdf"), download_file(student_pdf, "Three.pdf"))
+    return json.dumps(full_data)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
